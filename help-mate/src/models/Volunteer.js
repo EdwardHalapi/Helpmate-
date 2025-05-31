@@ -1,22 +1,23 @@
 export class Volunteer {
   constructor({
     id = null,
-    firstName = '',
-    lastName = '',
-    email = '',
-    phone = '',
+    firstName = "",
+    lastName = "",
+    email = "",
+    phone = "",
     age = null,
-    experience = 'Începător',
+    experience = "Începător",
     rating = 0,
     totalProjects = 0,
     totalHours = 0,
     skills = [],
     availability = [],
-    status = 'Activ', // Activ, Inactiv, În Așteptare
+    status = "Activ", // Activ, Inactiv, În Așteptare
     profileImage = null,
     joinDate = new Date(),
     lastActive = new Date(),
-    organizationId = null
+    organizationId = null,
+    projects = [],
   }) {
     this.id = id;
     this.firstName = firstName;
@@ -35,6 +36,7 @@ export class Volunteer {
     this.joinDate = joinDate;
     this.lastActive = lastActive;
     this.organizationId = organizationId;
+    this.projects = projects; // Array of project IDs or objects
   }
 
   get fullName() {
@@ -42,11 +44,13 @@ export class Volunteer {
   }
 
   get initials() {
-    return `${this.firstName.charAt(0)}${this.lastName.charAt(0)}`.toUpperCase();
+    return `${this.firstName.charAt(0)}${this.lastName.charAt(
+      0
+    )}`.toUpperCase();
   }
 
   get experienceYears() {
-    if (this.experience === 'Începător') return 0;
-    return parseInt(this.experience.replace(/\D/g, '')) || 0;
+    if (this.experience === "Începător") return 0;
+    return parseInt(this.experience.replace(/\D/g, "")) || 0;
   }
 }
