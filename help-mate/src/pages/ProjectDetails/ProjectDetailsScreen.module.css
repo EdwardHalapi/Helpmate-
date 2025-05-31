@@ -1,0 +1,804 @@
+/* ProjectDetailsScreen.module.css */
+
+.projectDetails {
+  min-height: 100vh;
+  background-color: var(--bg-secondary);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+/* Header */
+.header {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) 0;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: none;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.backButton:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 160px;
+  justify-content: center;
+}
+
+.actionButton:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--primary-600);
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, var(--bg-purple-light) 0%, var(--bg-secondary) 100%);
+  padding: var(--spacing-2xl) 0;
+}
+
+.heroContent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-2xl);
+  align-items: start;
+}
+
+.heroImage {
+  position: relative;
+}
+
+.projectImage {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+}
+
+.imageIcon {
+  font-size: 3rem;
+}
+
+.heroInfo {
+  flex: 1;
+}
+
+.projectHeader {
+  margin-bottom: var(--spacing-xl);
+}
+
+.badges {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.priority {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-xl);
+}
+
+.priorityHigh {
+  background-color: var(--error-light);
+  color: var(--error-dark);
+}
+
+.priorityMedium {
+  background-color: var(--warning-light);
+  color: var(--warning-dark);
+}
+
+.priorityLow {
+  background-color: var(--info-light);
+  color: var(--info-dark);
+}
+
+.quickStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.statItem svg {
+  color: var(--primary-600);
+}
+
+/* Action Section */
+.actionSection {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: var(--spacing-xl) 0;
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Content */
+.content {
+  padding: var(--spacing-2xl) 0;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  border-bottom: 2px solid var(--gray-200);
+  margin-bottom: var(--spacing-xl);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.tab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: none;
+  color: var(--gray-600);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.tab:hover {
+  color: var(--gray-900);
+}
+
+.tab.active {
+  color: var(--primary-600);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--primary-600);
+}
+
+.badge {
+  background-color: var(--primary-100);
+  color: var(--primary-700);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Remove old tab button styles */
+.tabButton {
+  display: none;
+}
+
+.tabContent {
+  min-height: 400px;
+}
+
+/* Overview Tab */
+.overview {
+  
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--spacing-xl);
+}
+
+.overviewMain {
+  
+}
+
+.overviewSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.skillsSection {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-primary);
+}
+
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.progressSection {
+  
+}
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.progressBar {
+  height: 8px;
+  background-color: var(--gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+  transition: width var(--transition-normal);
+}
+
+.progressStats {
+  
+}
+
+.progressStat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.volunteerStats {
+  
+}
+
+.volunteerStat {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.volunteerStat svg {
+  color: var(--primary-600);
+}
+
+.volunteerProgress {
+  
+}
+
+.volunteerBar {
+  height: 6px;
+  background-color: var(--gray-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.volunteerFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--success-dark));
+  transition: width var(--transition-normal);
+}
+
+/* Details Tab */
+.details {
+  
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+}
+
+.detailsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.detailItem svg {
+  color: var(--primary-600);
+}
+
+/* Progress Tab */
+.progressTab {
+  
+}
+
+.progressOverview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.progressMetric {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.progressMetric svg {
+  color: var(--primary-600);
+}
+
+/* Volunteers Tab */
+.volunteersTab {
+  
+}
+
+.volunteerOverview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.volunteerMetric {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.volunteerMetric svg {
+  color: var(--primary-600);
+}
+
+.joinTeam {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--bg-purple-light);
+  border-radius: var(--radius-lg);
+  margin-top: var(--spacing-xl);
+}
+
+.joinTeam h4 {
+  margin-bottom: var(--spacing-md);
+}
+
+.joinTeam p {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Loading & Error States */
+.loading,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: var(--spacing-lg);
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-200);
+  border-top: 3px solid var(--primary-600);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorActions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .heroContent {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+    text-align: center;
+  }
+
+  .projectImage {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+  }
+
+  .imageIcon {
+    font-size: 2rem;
+  }
+
+  .quickStats {
+    grid-template-columns: 1fr;
+  }
+
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .progressOverview,
+  .volunteerOverview {
+    grid-template-columns: 1fr;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .actionButtons .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .tabs {
+    padding-bottom: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
+  }
+
+  .headerContent {
+    padding: var(--spacing-md) 0;
+  }
+
+  .projectActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actionButton {
+    width: 100%;
+  }
+
+  .successMessage {
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: var(--spacing-xl) 0;
+  }
+
+  .quickStats {
+    gap: var(--spacing-md);
+  }
+
+  .statItem {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+
+  .progressMetric,
+  .volunteerMetric {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+
+  .tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Focus States */
+.backButton:focus-visible,
+.actionButton:focus-visible,
+.tab:focus-visible {
+  outline: 2px solid var(--primary-600);
+  outline-offset: 2px;
+}
+
+/* Animations */
+.tabContent {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Donations Tab */
+.donations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.donationsSummary {
+  background: white;
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.donationStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.donationStat {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--gray-50);
+  border-radius: 8px;
+}
+
+.donationStat svg {
+  color: var(--primary-600);
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.statContent h3 {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.statContent p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.donateButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.donationsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.donationItem {
+  background: white;
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.donationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.donorInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.donorName {
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.cardNumber {
+  color: var(--gray-500);
+  font-size: 0.875rem;
+}
+
+.donationAmount {
+  font-weight: 600;
+  color: var(--success-600);
+}
+
+.donationFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.timestamp {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+}
+
+.emptyState {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.emptyStateContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.emptyStateContent svg {
+  color: var(--gray-400);
+}
+
+.emptyStateContent h3 {
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.emptyStateContent p {
+  color: var(--gray-600);
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .donationStats {
+    grid-template-columns: 1fr;
+  }
+
+  .donationItem {
+    padding: var(--spacing-md);
+  }
+
+  .donationHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .donationAmount {
+    align-self: flex-end;
+  }
+}
+
+.projectActions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--success-600);
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--success-50);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

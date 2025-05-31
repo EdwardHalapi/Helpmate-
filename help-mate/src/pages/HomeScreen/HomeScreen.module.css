@@ -1,4 +1,5 @@
 /* HomeScreen.module.css */
+
 .homeScreen {
   min-height: 100vh;
   background-color: var(--bg-secondary);
@@ -187,11 +188,23 @@
 }
 
 /* Project Card */
+.projectCardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.projectCardLink:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
 .projectCard {
   height: 100%;
   display: flex;
   flex-direction: column;
   transition: all var(--transition-normal);
+  cursor: pointer;
 }
 
 .projectCard:hover {
@@ -457,7 +470,7 @@
 }
 
 /* Dark mode adjustments */
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   .hero {
     background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
   }
@@ -469,5 +482,29 @@
 
   .progressBar {
     background-color: var(--gray-700);
+  }
+}
+
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--success-600);
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--success-50);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

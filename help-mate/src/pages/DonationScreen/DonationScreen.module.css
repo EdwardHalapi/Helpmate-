@@ -1,0 +1,365 @@
+.donationOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.donationModal {
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  box-shadow: var(--shadow-2xl);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.closeButton {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-sm);
+  color: var(--gray-500);
+  transition: color var(--transition-fast);
+  border-radius: 50%;
+}
+
+.closeButton:hover {
+  color: var(--gray-700);
+  background-color: var(--gray-100);
+}
+
+.donationHeader {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.donationHeader svg {
+  color: var(--primary-600);
+  margin-bottom: var(--spacing-sm);
+}
+
+.donationHeader h2 {
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.donationHeader p {
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.donationForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.amountSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.predefinedAmounts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.amountButton {
+  padding: var(--spacing-lg);
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--gray-700);
+  transition: all var(--transition-fast);
+}
+
+.amountButton:hover {
+  border-color: var(--primary-600);
+  color: var(--primary-600);
+}
+
+.amountButton.selected {
+  background: var(--primary-600);
+  color: white;
+  border-color: var(--primary-600);
+}
+
+.customAmount {
+  width: 100%;
+}
+
+.customAmountInput {
+  width: 100%;
+  padding: var(--spacing-lg);
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 1rem;
+  color: var(--gray-900);
+  transition: border-color var(--transition-fast);
+}
+
+.customAmountInput:focus {
+  border-color: var(--primary-600);
+  outline: none;
+}
+
+.customAmountInput::placeholder {
+  color: var(--gray-400);
+}
+
+.cardSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.inputGroup label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.inputGroup input {
+  padding: var(--spacing-md);
+  border: 2px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: var(--gray-900);
+  transition: border-color var(--transition-fast);
+}
+
+.inputGroup input:focus {
+  border-color: var(--primary-600);
+  outline: none;
+}
+
+.inputGroup input::placeholder {
+  color: var(--gray-400);
+}
+
+.errorText {
+  color: var(--error-600);
+  font-size: 0.75rem;
+  margin-top: -4px;
+}
+
+.cardDetails {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.submitButton {
+  background: var(--primary-600);
+  color: white;
+  padding: var(--spacing-lg);
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.submitButton:hover {
+  background: var(--primary-700);
+}
+
+.submitButton:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .donationModal {
+    padding: var(--spacing-lg);
+    border-radius: 12px;
+  }
+
+  .predefinedAmounts {
+    grid-template-columns: 1fr;
+  }
+
+  .cardDetails {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Success Screen */
+.successScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-lg);
+}
+
+.successIcon {
+  color: var(--success-600);
+  animation: scaleIn 0.3s ease-out;
+}
+
+.successScreen h2 {
+  color: var(--gray-900);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.successScreen p {
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.navigationButtons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.navButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.homeButton {
+  background-color: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.homeButton:hover {
+  background-color: var(--gray-200);
+}
+
+.projectButton {
+  background-color: var(--primary-600);
+  color: white;
+}
+
+.projectButton:hover {
+  background-color: var(--primary-700);
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 640px) {
+  .navigationButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .navButton {
+    width: 100%;
+  }
+}
+
+/* Loading Screen */
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-lg);
+}
+
+.loadingScreen p {
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-200);
+  border-radius: 50%;
+  border-top-color: var(--primary-600);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error Screen */
+.errorScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-2xl);
+  gap: var(--spacing-lg);
+}
+
+.errorScreen h2 {
+  color: var(--error-600);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.errorScreen p {
+  color: var(--gray-600);
+  margin: 0;
+} 
