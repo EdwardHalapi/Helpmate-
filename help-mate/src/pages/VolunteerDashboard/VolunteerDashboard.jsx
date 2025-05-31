@@ -5,6 +5,7 @@ import "../../styles/globals.css";
 import "../../styles/typography.css";
 import "../../styles/components.css";
 import { volunteerService } from "../../services/api/volunteers.js";
+import { ProjectsService } from "../../services/api/projects.js";
 import Header from "../../components/layout/Header/Header.jsx";
 
 const TaskCard = ({ title, status, priority, description, meta, progress }) => {
@@ -42,11 +43,21 @@ const VolunteerDashboard = () => {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
+  const projectsService = new ProjectsService();
+
   useEffect(() => {
     const loadUser = async () => {
       try {
         setLoading(true);
         const user = await volunteerService.getById("75ytUh3LjYvs5EXF6itS"); // Exemplu de ID
+
+        user.projects = await Promise.all(
+          user.projects.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return data;
+          })
+        );
+
         console.log("Utilizator încărcat:", user);
         setUser(user);
       } catch (error) {
