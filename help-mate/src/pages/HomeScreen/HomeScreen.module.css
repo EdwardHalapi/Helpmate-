@@ -1,5 +1,15 @@
 /* HomeScreen.module.css */
-
+.containerAplication {
+  max-width: 2400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+.info-center {
+  margin: 0 auto;
+}
 .homeScreen {
   min-height: 100vh;
   background-color: var(--bg-secondary);
@@ -35,7 +45,11 @@
 
 /* Hero Section */
 .hero {
-  background: linear-gradient(135deg, var(--bg-purple-light) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--bg-purple-light) 0%,
+    var(--bg-secondary) 100%
+  );
   padding: var(--spacing-2xl) 0;
 }
 
@@ -135,7 +149,8 @@
 
 .input {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) calc(var(--spacing-md) * 3);
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md)
+    calc(var(--spacing-md) * 3);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-base);
@@ -366,8 +381,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive Design */
@@ -472,7 +491,11 @@
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .hero {
-    background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--gray-800) 0%,
+      var(--gray-900) 100%
+    );
   }
 
   .skillBadge {

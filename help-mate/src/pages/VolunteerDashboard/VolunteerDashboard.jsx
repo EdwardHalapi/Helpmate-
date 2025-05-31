@@ -62,7 +62,6 @@ const VolunteerDashboard = () => {
   const [user, setUser] = useState(null);
 
   const projectsService = new ProjectsService();
-
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -119,7 +118,7 @@ const VolunteerDashboard = () => {
         name={user?.firstName + " " + user?.lastName}
         oreTotale={user?.totalHours || 0}
         taskuriFinalizate={1}
-        proiecteActive={user?.totalProjects || 0}
+        proiecteActive={user?.projects.length || 0}
       />
 
       {/* Tabs */}
@@ -198,7 +197,25 @@ const VolunteerDashboard = () => {
       {pageSelected === "status-aplicatii" && (
         <main className="dashboard-main">
           <h2 className="section-title">Status Aplicatii</h2>
-          <div className="status-aplicatii"></div>
+          <div className="status-aplicatii">
+            {/* Projects Section */}
+            <section className={styles.projects}>
+              <div className={styles.containerAplication}>
+                {user?.pending?.length === 0 &&
+                user?.refused?.length === 0 &&
+                user?.accepted?.lenght === 0 ? (
+                  <div className={styles.noProjects}>
+                    <p className="text-lg text-secondary">
+                      Nu s-au gasit aplicații. Începe prin a te inscrie la unul
+                      dintre proiecte.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.my_container}></div>
+                )}
+              </div>
+            </section>
+          </div>
         </main>
       )}
 
@@ -206,7 +223,46 @@ const VolunteerDashboard = () => {
     </div>
   );
 };
+const ProjectAplication = ({ project }) => {
+  const navigate = useNavigate();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
 
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Activ":
+        return "badge-success";
+      case "Planificat":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-info";
+      default:
+        return "badge-warning";
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "Ridicată":
+        return styles.priorityHigh;
+      case "Medie":
+        return styles.priorityMedium;
+      case "Scăzută":
+        return styles.priorityLow;
+      default:
+        return styles.priorityMedium;
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "Nu este stabilită";
+    return new Intl.DateTimeFormat("ro-RO", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+  };
+};
 const ProjectCard = ({ project }) => {
   const navigate = useNavigate();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
