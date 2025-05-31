@@ -57,15 +57,9 @@
 .actionButton {
   display: flex;
   align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 160px;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: var(--bg-secondary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .actionButton:hover {
@@ -542,6 +536,20 @@
   .headerContent {
     padding: var(--spacing-md) 0;
   }
+
+  .projectActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actionButton {
+    width: 100%;
+  }
+
+  .successMessage {
+    text-align: center;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -761,5 +769,36 @@
 
   .donationAmount {
     align-self: flex-end;
+  }
+}
+
+.projectActions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--success-600);
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--success-50);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

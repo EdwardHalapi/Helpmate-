@@ -20,7 +20,8 @@ export class Project {
     totalTasks = 0,
     donations = [],
     totalDonations = 0,
-    lastDonationAt = null
+    lastDonationAt = null,
+    pendingVolunteers = [] // Array of {volunteerId, status, appliedAt}
   }) {
     this.id = id;
     this.title = title;
@@ -44,11 +45,14 @@ export class Project {
     this.donations = this.processDonations(donations);
     this.totalDonations = totalDonations || 0;
     this.lastDonationAt = lastDonationAt ? new Date(lastDonationAt) : null;
+    this.pendingVolunteers = this.processPendingVolunteers(pendingVolunteers);
   }
 
   calculateProgress() {
     if (this.totalTasks === 0) return 0;
-    return Math.round((this.completedTasks / this.totalTasks) * 100);
+    // Calculate percentage and round to nearest integer
+    const percentage = (this.completedTasks / this.totalTasks) * 100;
+    return Math.round(percentage);
   }
 
   processDonations(donations) {
@@ -59,6 +63,18 @@ export class Project {
       donorName: donation.donorName || '',
       timestamp: donation.timestamp ? new Date(donation.timestamp) : new Date(),
       lastFourDigits: donation.lastFourDigits || ''
+    }));
+  }
+
+  processPendingVolunteers(volunteers) {
+    if (!Array.isArray(volunteers)) return [];
+    
+    return volunteers.map(volunteer => ({
+      volunteerId: volunteer.volunteerId || '',
+      status: volunteer.status || 'Pending', // Pending, Approved, Canceled
+      appliedAt: volunteer.appliedAt ? new Date(volunteer.appliedAt) : new Date(),
+      name: volunteer.name || '',
+      email: volunteer.email || ''
     }));
   }
 
@@ -89,7 +105,14 @@ export class Project {
         lastFourDigits: donation.lastFourDigits
       })),
       totalDonations: this.totalDonations,
-      lastDonationAt: this.lastDonationAt
+      lastDonationAt: this.lastDonationAt,
+      pendingVolunteers: this.pendingVolunteers.map(volunteer => ({
+        volunteerId: volunteer.volunteerId,
+        status: volunteer.status,
+        appliedAt: volunteer.appliedAt.toISOString(),
+        name: volunteer.name,
+        email: volunteer.email
+      }))
     };
   }
 
@@ -99,7 +122,8 @@ export class Project {
       ...data,
       donations: Array.isArray(data.donations) ? data.donations : [],
       totalDonations: data.totalDonations || 0,
-      lastDonationAt: data.lastDonationAt || null
+      lastDonationAt: data.lastDonationAt || null,
+      pendingVolunteers: Array.isArray(data.pendingVolunteers) ? data.pendingVolunteers : []
     });
   }
 
@@ -142,5 +166,30 @@ export class Project {
 
   get isComplete() {
     return this.status === 'Finalizat' || this.progress === 100;
+  }
+
+  addVolunteerApplication(volunteer) {
+    const existingApplication = this.pendingVolunteers.find(v => v.volunteerId === volunteer.volunteerId);
+    if (existingApplication) {
+      return false; // Already applied
+    }
+
+    const newApplication = {
+      volunteerId: volunteer.volunteerId,
+      status: 'Pending',
+      appliedAt: new Date(),
+      name: volunteer.name || `${volunteer.firstName} ${volunteer.lastName}`,
+      email: volunteer.email
+    };
+
+    this.pendingVolunteers.push(newApplication);
+    this.updatedAt = new Date();
+
+    return true;
+  }
+
+  getVolunteerApplicationStatus(volunteerId) {
+    const application = this.pendingVolunteers.find(v => v.volunteerId === volunteerId);
+    return application ? application.status : null;
   }
 }
