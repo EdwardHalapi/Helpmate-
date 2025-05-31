@@ -432,15 +432,9 @@ const ProjectCard = ({ project }) => {
               <Heart size={16} />
               Donează
             </Link>
-            {project.status !== 'Finalizat' && (
-              <Link to={`/proiecte/${project.id}/voluntar`} className="btn btn-secondary">
-                <User size={16} />
-                Voluntar
-              </Link>
-            )}
             {project.status === 'Activ' && 
              project.currentVolunteers < project.maxVolunteers && 
-             project.progress > 0 && (
+             project.progress >= 0 && (
               <Link to={`/proiecte/${project.id}/susține`} className="btn btn-primary">
                 Susține
                 <ArrowRight size={16} />

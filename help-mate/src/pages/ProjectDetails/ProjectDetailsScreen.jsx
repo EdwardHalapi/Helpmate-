@@ -15,11 +15,18 @@ import {
   User,
   Mail,
   Phone,
-  Globe
+  Globe,
+  CreditCard,
+  CheckCircle2,
+  AlertCircle,
+  CircleDot
 } from 'lucide-react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../../services/firebase/config';
 import projectsService from '../../services/api/projects.js';
 import { Project } from '../../models/Project.js';
 import styles from './ProjectDetailsScreen.module.css';
+import ShareButtons from '../../components/common/ShareButtons/ShareButtons';
 
 const ProjectDetailsScreen = () => {
   const { id } = useParams();
@@ -30,19 +37,28 @@ const ProjectDetailsScreen = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
+    let unsubscribe;
+
     const loadProject = async () => {
       try {
         setLoading(true);
-        const projectData = await projectsService.getProjectById(id);
-        if (projectData) {
-          setProject(projectData);
-        } else {
-          setError('Proiectul nu a fost găsit');
-        }
+        // Set up real-time listener
+        unsubscribe = onSnapshot(doc(db, 'projects', id), (doc) => {
+          if (doc.exists()) {
+            setProject({ id: doc.id, ...doc.data() });
+            setLoading(false);
+          } else {
+            setError('Proiectul nu a fost găsit');
+            setLoading(false);
+          }
+        }, (error) => {
+          console.error('Error loading project:', error);
+          setError('Nu s-a putut încărca proiectul');
+          setLoading(false);
+        });
       } catch (error) {
-        console.error('Eroare la încărcarea proiectului:', error);
+        console.error('Error setting up project listener:', error);
         setError('Nu s-a putut încărca proiectul');
-      } finally {
         setLoading(false);
       }
     };
@@ -50,6 +66,13 @@ const ProjectDetailsScreen = () => {
     if (id) {
       loadProject();
     }
+
+    // Cleanup subscription
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [id]);
 
   const getStatusBadgeClass = (status) => {
@@ -97,6 +120,23 @@ const ProjectDetailsScreen = () => {
     }).format(date);
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('ro-RO', {
+      style: 'currency',
+      currency: 'RON'
+    }).format(amount);
+  };
+
+  const formatTimestamp = (timestamp) => {
+    return new Intl.DateTimeFormat('ro-RO', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(timestamp));
+  };
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -112,9 +152,9 @@ const ProjectDetailsScreen = () => {
         <h2 className="text-h2">Oops! Ceva nu a mers bine</h2>
         <p className="text-lg text-secondary">{error}</p>
         <div className={styles.errorActions}>
-          <button className="btn btn-primary" onClick={() => navigate('/')}>
+          <button className="btn btn-primary" onClick={() => navigate(-1)}>
             <ArrowLeft size={16} />
-            Înapoi la Acasă
+            Înapoi
           </button>
           <button className="btn btn-secondary" onClick={() => window.location.reload()}>
             Încearcă din nou
@@ -132,18 +172,17 @@ const ProjectDetailsScreen = () => {
           <div className={styles.headerContent}>
             <button 
               className={styles.backButton}
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
             >
               <ArrowLeft size={20} />
               Înapoi
             </button>
             <div className={styles.headerActions}>
-              <button className={styles.actionButton}>
-                <Share2 size={20} />
-              </button>
-              <button className={styles.actionButton}>
-                <Bookmark size={20} />
-              </button>
+              <ShareButtons 
+                url={window.location.href} 
+                title={project.title}
+                description={project.description}
+              />
             </div>
           </div>
         </div>
@@ -225,320 +264,358 @@ const ProjectDetailsScreen = () => {
                 Susține ca voluntar
               </Link>
             )}
-            <button className="btn btn-secondary">
-              <Share2 size={20} />
-              Distribuie
-            </button>
+            <ShareButtons 
+              url={window.location.href} 
+              title={project.title}
+              description={project.description}
+            />
           </div>
         </div>
       </section>
 
-      {/* Content Tabs */}
-      <section className={styles.content}>
+      {/* Project Content */}
+      <div className={styles.projectContent}>
         <div className={styles.container}>
-          <div className={styles.tabNavigation}>
-            <button 
-              className={`${styles.tabButton} ${activeTab === 'overview' ? styles.active : ''}`}
+          {/* Tabs */}
+          <div className={styles.tabs}>
+            <button
+              className={`${styles.tab} ${activeTab === 'overview' ? styles.active : ''}`}
               onClick={() => setActiveTab('overview')}
             >
-              Prezentare generală
+              Prezentare Generală
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'donations' ? styles.active : ''}`}
+              onClick={() => setActiveTab('donations')}
+            >
+              Donații
+              {project.donations?.length > 0 && (
+                <span className={styles.badge}>{project.donations.length}</span>
+              )}
             </button>
             <button 
-              className={`${styles.tabButton} ${activeTab === 'details' ? styles.active : ''}`}
+              className={`${styles.tab} ${activeTab === 'details' ? styles.active : ''}`}
               onClick={() => setActiveTab('details')}
             >
               Detalii complete
             </button>
             <button 
-              className={`${styles.tabButton} ${activeTab === 'progress' ? styles.active : ''}`}
+              className={`${styles.tab} ${activeTab === 'progress' ? styles.active : ''}`}
               onClick={() => setActiveTab('progress')}
             >
               Progres
             </button>
             <button 
-              className={`${styles.tabButton} ${activeTab === 'volunteers' ? styles.active : ''}`}
+              className={`${styles.tab} ${activeTab === 'volunteers' ? styles.active : ''}`}
               onClick={() => setActiveTab('volunteers')}
             >
               Echipa
             </button>
           </div>
 
+          {/* Tab Content */}
           <div className={styles.tabContent}>
-            {activeTab === 'overview' && (
-              <OverviewTab project={project} />
-            )}
-            {activeTab === 'details' && (
-              <DetailsTab project={project} />
-            )}
-            {activeTab === 'progress' && (
-              <ProgressTab project={project} />
-            )}
-            {activeTab === 'volunteers' && (
-              <VolunteersTab project={project} />
-            )}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-};
+            {activeTab === 'overview' ? (
+              <div className={styles.overview}>
+                <div className={styles.overviewGrid}>
+                  <div className={styles.overviewMain}>
+                    <div className="card">
+                      <div className="card-body">
+                        <h3 className="text-h3">Despre proiect</h3>
+                        <p className="text-base">{project.description}</p>
+                        
+                        {project.requiredSkills.length > 0 && (
+                          <div className={styles.skillsSection}>
+                            <h4 className="text-h4">Competențe necesare</h4>
+                            <div className={styles.skills}>
+                              {project.requiredSkills.map((skill, index) => (
+                                <span key={index} className="badge badge-info">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-// Overview Tab Component
-const OverviewTab = ({ project }) => {
-  return (
-    <div className={styles.overview}>
-      <div className={styles.overviewGrid}>
-        <div className={styles.overviewMain}>
-          <div className="card">
-            <div className="card-body">
-              <h3 className="text-h3">Despre proiect</h3>
-              <p className="text-base">{project.description}</p>
-              
-              {project.requiredSkills.length > 0 && (
-                <div className={styles.skillsSection}>
-                  <h4 className="text-h4">Competențe necesare</h4>
-                  <div className={styles.skills}>
-                    {project.requiredSkills.map((skill, index) => (
-                      <span key={index} className="badge badge-info">
-                        {skill}
-                      </span>
+                  <div className={styles.overviewSidebar}>
+                    <div className="card">
+                      <div className="card-body">
+                        <h4 className="text-h4">Progres proiect</h4>
+                        <div className={styles.progressSection}>
+                          <div className={styles.progressHeader}>
+                            <span className="text-lg font-bold">{project.progress}%</span>
+                            <span className="text-sm text-secondary">completat</span>
+                          </div>
+                          <div className={styles.progressBar}>
+                            <div 
+                              className={styles.progressFill}
+                              style={{ width: `${project.progress}%` }}
+                            ></div>
+                          </div>
+                          <div className={styles.progressStats}>
+                            <div className={styles.progressStat}>
+                              <span className="text-sm text-muted">Task-uri completate</span>
+                              <span className="text-sm font-medium">{project.completedTasks}/{project.totalTasks}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="card">
+                      <div className="card-body">
+                        <h4 className="text-h4">Voluntari</h4>
+                        <div className={styles.volunteerStats}>
+                          <div className={styles.volunteerStat}>
+                            <Users size={24} />
+                            <div>
+                              <span className="text-lg font-bold">{project.currentVolunteers}</span>
+                              <span className="text-sm text-secondary">/ {project.maxVolunteers} voluntari</span>
+                            </div>
+                          </div>
+                          <div className={styles.volunteerProgress}>
+                            <div className={styles.volunteerBar}>
+                              <div 
+                                className={styles.volunteerFill}
+                                style={{ width: `${(project.currentVolunteers / project.maxVolunteers) * 100}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 'donations' ? (
+              <div className={styles.donations}>
+                <div className={styles.donationsSummary}>
+                  <div className={styles.donationStats}>
+                    <div className={styles.donationStat}>
+                      <CreditCard size={24} />
+                      <div className={styles.statContent}>
+                        <h3>Total Donații</h3>
+                        <p>{formatCurrency(project.totalDonations || 0)}</p>
+                      </div>
+                    </div>
+                    <div className={styles.donationStat}>
+                      <Users size={24} />
+                      <div className={styles.statContent}>
+                        <h3>Donatori</h3>
+                        <p>{project.donations?.length || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link 
+                    to={`/proiecte/${id}/donează`}
+                    className={`btn btn-primary ${styles.donateButton}`}
+                  >
+                    <Heart size={20} />
+                    Donează pentru acest proiect
+                  </Link>
+                </div>
+
+                {project.donations && project.donations.length > 0 ? (
+                  <div className={styles.donationsList}>
+                    {project.donations.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map((donation, index) => (
+                      <div key={index} className={styles.donationItem}>
+                        <div className={styles.donationHeader}>
+                          <div className={styles.donorInfo}>
+                            <User size={20} />
+                            <span className={styles.donorName}>{donation.donorName}</span>
+                            <span className={styles.cardNumber}>•••• {donation.lastFourDigits}</span>
+                          </div>
+                          <span className={styles.donationAmount}>
+                            {formatCurrency(donation.amount)}
+                          </span>
+                        </div>
+                        <div className={styles.donationFooter}>
+                          <span className={styles.timestamp}>
+                            {formatTimestamp(donation.timestamp)}
+                          </span>
+                        </div>
+                      </div>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <div className={styles.emptyStateContent}>
+                      <Heart size={48} />
+                      <h3>Nicio donație încă</h3>
+                      <p>Fii primul care donează pentru acest proiect și ajută-ne să îl realizăm!</p>
+                      <Link 
+                        to={`/proiecte/${id}/donează`}
+                        className="btn btn-primary"
+                      >
+                        Donează Acum
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : activeTab === 'details' ? (
+              <div className={styles.details}>
+                <div className={styles.detailsGrid}>
+                  <div className="card">
+                    <div className="card-header">
+                      <h3 className="text-h3">Informații detaliate</h3>
+                    </div>
+                    <div className="card-body">
+                      <div className={styles.detailsList}>
+                        <div className={styles.detailItem}>
+                          <Calendar size={20} />
+                          <div>
+                            <span className="text-sm text-muted">Data începerii</span>
+                            <p className="text-base font-medium">{formatDate(project.startDate)}</p>
+                          </div>
+                        </div>
+                        <div className={styles.detailItem}>
+                          <Calendar size={20} />
+                          <div>
+                            <span className="text-sm text-muted">Data finalizării</span>
+                            <p className="text-base font-medium">{formatDate(project.endDate)}</p>
+                          </div>
+                        </div>
+                        <div className={styles.detailItem}>
+                          <MapPin size={20} />
+                          <div>
+                            <span className="text-sm text-muted">Locația</span>
+                            <p className="text-base font-medium">{project.location}</p>
+                          </div>
+                        </div>
+                        <div className={styles.detailItem}>
+                          <Target size={20} />
+                          <div>
+                            <span className="text-sm text-muted">Prioritate</span>
+                            <p className="text-base font-medium">Prioritate {project.priority}</p>
+                          </div>
+                        </div>
+                        <div className={styles.detailItem}>
+                          <Clock size={20} />
+                          <div>
+                            <span className="text-sm text-muted">Ore estimate</span>
+                            <p className="text-base font-medium">{project.totalHours} ore</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-        <div className={styles.overviewSidebar}>
-          <div className="card">
-            <div className="card-body">
-              <h4 className="text-h4">Progres proiect</h4>
-              <div className={styles.progressSection}>
-                <div className={styles.progressHeader}>
-                  <span className="text-lg font-bold">{project.progress}%</span>
-                  <span className="text-sm text-secondary">completat</span>
-                </div>
-                <div className={styles.progressBar}>
-                  <div 
-                    className={styles.progressFill}
-                    style={{ width: `${project.progress}%` }}
-                  ></div>
-                </div>
-                <div className={styles.progressStats}>
-                  <div className={styles.progressStat}>
-                    <span className="text-sm text-muted">Task-uri completate</span>
-                    <span className="text-sm font-medium">{project.completedTasks}/{project.totalTasks}</span>
+                  <div className="card">
+                    <div className="card-header">
+                      <h3 className="text-h3">Competențe necesare</h3>
+                    </div>
+                    <div className="card-body">
+                      <div className={styles.skills}>
+                        {project.requiredSkills.map((skill, index) => (
+                          <span key={index} className="badge badge-info">
+                            <CheckCircle size={14} />
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-body">
-              <h4 className="text-h4">Voluntari</h4>
-              <div className={styles.volunteerStats}>
-                <div className={styles.volunteerStat}>
-                  <Users size={24} />
-                  <div>
-                    <span className="text-lg font-bold">{project.currentVolunteers}</span>
-                    <span className="text-sm text-secondary">/ {project.maxVolunteers} voluntari</span>
+            ) : activeTab === 'progress' ? (
+              <div className={styles.progressTab}>
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-h3">Progresul proiectului</h3>
+                  </div>
+                  <div className="card-body">
+                    <div className={styles.progressOverview}>
+                      <div className={styles.progressMetric}>
+                        <Target size={32} />
+                        <div>
+                          <span className="text-2xl font-bold">{project.progress}%</span>
+                          <p className="text-sm text-secondary">Progres general</p>
+                        </div>
+                      </div>
+                      <div className={styles.progressMetric}>
+                        <CheckCircle size={32} />
+                        <div>
+                          <span className="text-2xl font-bold">{project.completedTasks}</span>
+                          <p className="text-sm text-secondary">Task-uri completate</p>
+                        </div>
+                      </div>
+                      <div className={styles.progressMetric}>
+                        <Clock size={32} />
+                        <div>
+                          <span className="text-2xl font-bold">{project.totalHours}</span>
+                          <p className="text-sm text-secondary">Ore lucrate</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className={styles.progressBar}>
+                      <div 
+                        className={styles.progressFill}
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="text-sm text-secondary text-center">
+                      {project.completedTasks} din {project.totalTasks} task-uri completate
+                    </p>
                   </div>
                 </div>
-                <div className={styles.volunteerProgress}>
-                  <div className={styles.volunteerBar}>
-                    <div 
-                      className={styles.volunteerFill}
-                      style={{ width: `${(project.currentVolunteers / project.maxVolunteers) * 100}%` }}
-                    ></div>
+              </div>
+            ) : activeTab === 'volunteers' ? (
+              <div className={styles.volunteersTab}>
+                <div className="card">
+                  <div className="card-header">
+                    <h3 className="text-h3">Echipa de voluntari</h3>
+                  </div>
+                  <div className="card-body">
+                    <div className={styles.volunteerOverview}>
+                      <div className={styles.volunteerMetric}>
+                        <Users size={32} />
+                        <div>
+                          <span className="text-2xl font-bold">{project.currentVolunteers}</span>
+                          <p className="text-sm text-secondary">Voluntari activi</p>
+                        </div>
+                      </div>
+                      <div className={styles.volunteerMetric}>
+                        <Target size={32} />
+                        <div>
+                          <span className="text-2xl font-bold">{project.maxVolunteers}</span>
+                          <p className="text-sm text-secondary">Voluntari necesari</p>
+                        </div>
+                      </div>
+                      <div className={styles.volunteerMetric}>
+                        <Star size={32} />
+                        <div>
+                          <span className="text-2xl font-bold">{project.maxVolunteers - project.currentVolunteers}</span>
+                          <p className="text-sm text-secondary">Locuri disponibile</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {project.status === 'Activ' && 
+                     project.currentVolunteers < project.maxVolunteers && 
+                     project.progress > 0 && (
+                      <div className={styles.joinTeam}>
+                        <h4 className="text-h4">Alătură-te echipei!</h4>
+                        <p className="text-base text-secondary">
+                          Mai sunt {project.maxVolunteers - project.currentVolunteers} locuri disponibile în această echipă minunată.
+                        </p>
+                        <Link to={`/proiecte/${project.id}/susține`} className="btn btn-primary">
+                          <Users size={20} />
+                          Susține ca voluntar
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Details Tab Component
-const DetailsTab = ({ project }) => {
-  const formatDate = (date) => {
-    if (!date) return 'Nu este stabilită';
-    return new Intl.DateTimeFormat('ro-RO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long'
-    }).format(date);
-  };
-
-  return (
-    <div className={styles.details}>
-      <div className={styles.detailsGrid}>
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-h3">Informații detaliate</h3>
-          </div>
-          <div className="card-body">
-            <div className={styles.detailsList}>
-              <div className={styles.detailItem}>
-                <Calendar size={20} />
-                <div>
-                  <span className="text-sm text-muted">Data începerii</span>
-                  <p className="text-base font-medium">{formatDate(project.startDate)}</p>
-                </div>
-              </div>
-              <div className={styles.detailItem}>
-                <Calendar size={20} />
-                <div>
-                  <span className="text-sm text-muted">Data finalizării</span>
-                  <p className="text-base font-medium">{formatDate(project.endDate)}</p>
-                </div>
-              </div>
-              <div className={styles.detailItem}>
-                <MapPin size={20} />
-                <div>
-                  <span className="text-sm text-muted">Locația</span>
-                  <p className="text-base font-medium">{project.location}</p>
-                </div>
-              </div>
-              <div className={styles.detailItem}>
-                <Target size={20} />
-                <div>
-                  <span className="text-sm text-muted">Prioritate</span>
-                  <p className="text-base font-medium">Prioritate {project.priority}</p>
-                </div>
-              </div>
-              <div className={styles.detailItem}>
-                <Clock size={20} />
-                <div>
-                  <span className="text-sm text-muted">Ore estimate</span>
-                  <p className="text-base font-medium">{project.totalHours} ore</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-h3">Competențe necesare</h3>
-          </div>
-          <div className="card-body">
-            <div className={styles.skills}>
-              {project.requiredSkills.map((skill, index) => (
-                <span key={index} className="badge badge-info">
-                  <CheckCircle size={14} />
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Progress Tab Component
-const ProgressTab = ({ project }) => {
-  return (
-    <div className={styles.progressTab}>
-      <div className="card">
-        <div className="card-header">
-          <h3 className="text-h3">Progresul proiectului</h3>
-        </div>
-        <div className="card-body">
-          <div className={styles.progressOverview}>
-            <div className={styles.progressMetric}>
-              <Target size={32} />
-              <div>
-                <span className="text-2xl font-bold">{project.progress}%</span>
-                <p className="text-sm text-secondary">Progres general</p>
-              </div>
-            </div>
-            <div className={styles.progressMetric}>
-              <CheckCircle size={32} />
-              <div>
-                <span className="text-2xl font-bold">{project.completedTasks}</span>
-                <p className="text-sm text-secondary">Task-uri completate</p>
-              </div>
-            </div>
-            <div className={styles.progressMetric}>
-              <Clock size={32} />
-              <div>
-                <span className="text-2xl font-bold">{project.totalHours}</span>
-                <p className="text-sm text-secondary">Ore lucrate</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className={styles.progressBar}>
-            <div 
-              className={styles.progressFill}
-              style={{ width: `${project.progress}%` }}
-            ></div>
-          </div>
-          
-          <p className="text-sm text-secondary text-center">
-            {project.completedTasks} din {project.totalTasks} task-uri completate
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Volunteers Tab Component  
-const VolunteersTab = ({ project }) => {
-  return (
-    <div className={styles.volunteersTab}>
-      <div className="card">
-        <div className="card-header">
-          <h3 className="text-h3">Echipa de voluntari</h3>
-        </div>
-        <div className="card-body">
-          <div className={styles.volunteerOverview}>
-            <div className={styles.volunteerMetric}>
-              <Users size={32} />
-              <div>
-                <span className="text-2xl font-bold">{project.currentVolunteers}</span>
-                <p className="text-sm text-secondary">Voluntari activi</p>
-              </div>
-            </div>
-            <div className={styles.volunteerMetric}>
-              <Target size={32} />
-              <div>
-                <span className="text-2xl font-bold">{project.maxVolunteers}</span>
-                <p className="text-sm text-secondary">Voluntari necesari</p>
-              </div>
-            </div>
-            <div className={styles.volunteerMetric}>
-              <Star size={32} />
-              <div>
-                <span className="text-2xl font-bold">{project.maxVolunteers - project.currentVolunteers}</span>
-                <p className="text-sm text-secondary">Locuri disponibile</p>
-              </div>
-            </div>
-          </div>
-          
-          {project.status === 'Activ' && 
-           project.currentVolunteers < project.maxVolunteers && 
-           project.progress > 0 && (
-            <div className={styles.joinTeam}>
-              <h4 className="text-h4">Alătură-te echipei!</h4>
-              <p className="text-base text-secondary">
-                Mai sunt {project.maxVolunteers - project.currentVolunteers} locuri disponibile în această echipă minunată.
-              </p>
-              <Link to={`/proiecte/${project.id}/susține`} className="btn btn-primary">
-                <Users size={20} />
-                Susține ca voluntar
-              </Link>
-            </div>
-          )}
         </div>
       </div>
     </div>

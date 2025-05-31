@@ -120,29 +120,27 @@ class ProjectsService {
    */
   async getProjectById(projectId) {
     try {
-      if (!projectId) {
-        throw new Error('ID-ul proiectului este necesar');
-      }
-
-      const docRef = doc(db, COLLECTION_NAME, projectId);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      console.log('Getting project document for ID:', projectId);
+      const projectRef = doc(db, 'projects', projectId);
+      const projectSnap = await getDoc(projectRef);
+      
+      if (projectSnap.exists()) {
+        const data = projectSnap.data();
         return new Project({
-          id: docSnap.id,
+          id: projectSnap.id,
           ...data,
+          // Convert timestamps to Date objects
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
           startDate: data.startDate?.toDate() || null,
-          endDate: data.endDate?.toDate() || null
+          endDate: data.endDate?.toDate() || null,
+          lastDonationAt: data.lastDonationAt?.toDate() || null
         });
-      } else {
-        return null;
       }
+      return null;
     } catch (error) {
-      console.error('Eroare la obținerea proiectului:', error);
-      throw new Error('Nu s-a putut încărca proiectul');
+      console.error('Error in getProjectById:', error);
+      throw error;
     }
   }
 

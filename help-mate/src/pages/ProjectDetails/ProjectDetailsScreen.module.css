@@ -180,33 +180,60 @@
   padding: var(--spacing-2xl) 0;
 }
 
-.tabNavigation {
+.tabs {
   display: flex;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-2xl);
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 2px solid var(--gray-200);
+  margin-bottom: var(--spacing-xl);
   overflow-x: auto;
+  padding-bottom: 2px;
 }
 
-.tabButton {
+.tab {
   padding: var(--spacing-md) var(--spacing-lg);
-  background: none;
   border: none;
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
+  background: none;
+  color: var(--gray-600);
+  font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
-  border-bottom: 2px solid transparent;
+  position: relative;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-.tabButton:hover {
+.tab:hover {
+  color: var(--gray-900);
+}
+
+.tab.active {
   color: var(--primary-600);
 }
 
-.tabButton.active {
-  color: var(--primary-600);
-  border-bottom-color: var(--primary-600);
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--primary-600);
+}
+
+.badge {
+  background-color: var(--primary-100);
+  color: var(--primary-700);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Remove old tab button styles */
+.tabButton {
+  display: none;
 }
 
 .tabContent {
@@ -494,8 +521,22 @@
     max-width: 300px;
   }
 
-  .tabNavigation {
-    justify-content: center;
+  .tabs {
+    padding-bottom: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.875rem;
   }
 
   .headerContent {
@@ -525,7 +566,7 @@
     gap: var(--spacing-sm);
   }
 
-  .tabButton {
+  .tab {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: var(--font-size-sm);
   }
@@ -534,7 +575,7 @@
 /* Focus States */
 .backButton:focus-visible,
 .actionButton:focus-visible,
-.tabButton:focus-visible {
+.tab:focus-visible {
   outline: 2px solid var(--primary-600);
   outline-offset: 2px;
 }
@@ -552,5 +593,173 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Donations Tab */
+.donations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.donationsSummary {
+  background: white;
+  border-radius: 12px;
+  padding: var(--spacing-xl);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.donationStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.donationStat {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--gray-50);
+  border-radius: 8px;
+}
+
+.donationStat svg {
+  color: var(--primary-600);
+}
+
+.statContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.statContent h3 {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.statContent p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.donateButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.donationsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.donationItem {
+  background: white;
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.donationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.donorInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.donorName {
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+.cardNumber {
+  color: var(--gray-500);
+  font-size: 0.875rem;
+}
+
+.donationAmount {
+  font-weight: 600;
+  color: var(--success-600);
+}
+
+.donationFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.timestamp {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+}
+
+.emptyState {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.emptyStateContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-lg);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.emptyStateContent svg {
+  color: var(--gray-400);
+}
+
+.emptyStateContent h3 {
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.emptyStateContent p {
+  color: var(--gray-600);
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .donationStats {
+    grid-template-columns: 1fr;
+  }
+
+  .donationItem {
+    padding: var(--spacing-md);
+  }
+
+  .donationHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .donationAmount {
+    align-self: flex-end;
   }
 }

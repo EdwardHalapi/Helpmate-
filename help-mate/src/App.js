@@ -11,6 +11,7 @@ import './styles/components.css';
 // Import pages - doar HomeScreen este implementat momentan
 import HomeScreen from './pages/HomeScreen/HomeScreen';
 import ProjectDetailsScreen from './pages/ProjectDetails/ProjectDetailsScreen';
+import DonationScreen from './pages/DonationScreen/DonationScreen';
 
 // Placeholder components pentru paginile care vor fi implementate
 const PlaceholderPage = ({ pageName }) => (
@@ -89,7 +90,7 @@ function App() {
           {/* Proiecte */}
           <Route path="/proiecte" element={<ProjectsScreen />} />
           <Route path="/proiecte/:id" element={<ProjectDetailsScreen />} />
-          <Route path="/proiecte/:id/donează" element={<PlaceholderPage pageName="Donează pentru Proiect" />} />
+          <Route path="/proiecte/:projectId/donează" element={<DonationScreen />} />
           <Route path="/proiecte/:id/susține" element={<PlaceholderPage pageName="Susține ca Voluntar" />} />
           <Route path="/proiecte/categorie/:category" element={<PlaceholderPage pageName="Proiecte pe Categorie" />} />
           
