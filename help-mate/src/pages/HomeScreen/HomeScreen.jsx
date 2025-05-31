@@ -150,7 +150,7 @@ const HomeScreen = () => {
         <div className={styles.container}>
           <div className={styles.headerContent}>
             <div className={styles.logo}>
-              <h1 className="text-h2 text-brand">Platformă Voluntari</h1>
+              <h1 className="text-h2 text-brand">HelpMate</h1>
               <p className="text-subtitle">Conectând comunități prin voluntariat</p>
             </div>
             <Link to="/login" className={`btn btn-secondary ${styles.loginBtn}`}>
@@ -294,7 +294,7 @@ const HomeScreen = () => {
         <div className={styles.container}>
           <div className={styles.footerContent}>
             <div className={styles.footerSection}>
-              <h5 className="text-h5">Platformă Voluntari</h5>
+              <h5 className="text-h5">HelpMate</h5>
               <p className="text-sm text-secondary">
                 Conectând comunități prin voluntariat
               </p>
@@ -326,7 +326,7 @@ const HomeScreen = () => {
           </div>
           <div className={styles.footerBottom}>
             <p className="text-sm text-muted">
-              &copy; 2025 Platformă Voluntari. Toate drepturile rezervate.
+              &copy; 2025 HelpMate. Toate drepturile rezervate.
             </p>
           </div>
         </div>

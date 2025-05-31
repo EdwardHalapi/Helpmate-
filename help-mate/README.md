@@ -1,70 +1,107 @@
-# Getting Started with Create React App
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+graph TB
+    %% User Types
+    Guest[👤 Guest User]
+    Volunteer[🙋‍♀️ Volunteer User]
+    Organizer[👨‍💼 Organization User]
+    
+    %% Core Database
+    DB[(🗄️ Centralized Database)]
+    
+    %% Main Entities
+    VolunteerProfiles[👥 Volunteer Profiles]
+    Projects[📋 Projects]
+    Tasks[✅ Tasks]
+    Applications[📝 Applications]
+    Donations[💰 Donations]
+    Events[📅 Events]
+    
+    %% User Actions & Features
+    subgraph "Guest Actions"
+        GuestDonate[💳 Donate to Projects]
+        CreateAccount[📝 Create Account<br/>Volunteer/Organization]
+    end
+    
+    subgraph "Volunteer Features"
+        ViewProjects[🔍 Browse Projects]
+        ApplyProjects[📤 Apply to Projects]
+        MyProjects[📊 My Assigned Projects]
+        TaskManagement[✏️ Update Task Status<br/>Log Hours]
+        ReceiveInvites[📧 Receive Event Invitations]
+    end
+    
+    subgraph "Organizer Features"
+        CreateProject[➕ Create Projects]
+        InviteVolunteers[📬 Invite Volunteers<br/>from Platform]
+        ManageTasks[📋 Assign Tasks<br/>to Volunteers]
+        CreateEvents[🎉 Create Events<br/>Send Email Invitations]
+        ProjectProgress[📈 View Project Progress<br/>Tasks/Volunteers Stats]
+    end
+    
+    subgraph "Project Details View"
+        Progress[📊 Progress Tracking]
+        TasksFinished[✅ Completed Tasks]
+        VolunteerCount[👥 Total Volunteers]
+        NeededVolunteers[🔢 Volunteers Needed]
+        ShareProject[🔗 Share Project]
+    end
+    
+    %% Email System
+    EmailSystem[📧 Email Notification System]
+    
+    %% Connections
+    Guest --> GuestDonate
+    Guest --> CreateAccount
+    Guest --> DB
+    
+    Volunteer --> ViewProjects
+    Volunteer --> ApplyProjects
+    Volunteer --> MyProjects
+    Volunteer --> TaskManagement
+    Volunteer --> ReceiveInvites
+    
+    Organizer --> CreateProject
+    Organizer --> InviteVolunteers
+    Organizer --> ManageTasks
+    Organizer --> CreateEvents
+    Organizer --> ProjectProgress
+    
+    %% Database connections
+    DB --> VolunteerProfiles
+    DB --> Projects
+    DB --> Tasks
+    DB --> Applications
+    DB --> Donations
+    DB --> Events
+    
+    %% Feature connections to database
+    ViewProjects --> Projects
+    ApplyProjects --> Applications
+    MyProjects --> Projects
+    TaskManagement --> Tasks
+    CreateProject --> Projects
+    ManageTasks --> Tasks
+    GuestDonate --> Donations
+    CreateEvents --> Events
+    InviteVolunteers --> VolunteerProfiles
+    
+    %% Project details connections
+    Projects --> Progress
+    Tasks --> TasksFinished
+    VolunteerProfiles --> VolunteerCount
+    Projects --> NeededVolunteers
+    Projects --> ShareProject
+    
+    %% Email system connections
+    CreateEvents --> EmailSystem
+    EmailSystem --> ReceiveInvites
+    
+    %% Styling
+    classDef userType fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef database fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef feature fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef action fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    class Guest,Volunteer,Organizer userType
+    class DB,VolunteerProfiles,Projects,Tasks,Applications,Donations,Events database
+    class ViewProjects,ApplyProjects,MyProjects,TaskManagement,CreateProject,InviteVolunteers,ManageTasks,CreateEvents,ProjectProgress feature
+    class GuestDonate,CreateAccount,ReceiveInvites,Progress,TasksFinished,VolunteerCount,NeededVolunteers,ShareProject,EmailSystem action
