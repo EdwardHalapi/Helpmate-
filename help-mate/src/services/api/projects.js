@@ -37,6 +37,7 @@ const PROJECT_STRUCTURE = {
   totalHours: 0,
   completedTasks: 0,
   totalTasks: 0,
+  tasks: [],
 };
 
 class ProjectsService {

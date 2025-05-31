@@ -26,13 +26,48 @@ import projectsService from "../../services/api/projects.js";
 import { Project } from "../../models/Project.js";
 import styles from "../HomeScreen/HomeScreen.module.css";
 
-const TaskCard = ({ title, status, priority, description, meta, progress }) => {
+const TaskCard = ({
+  title,
+  status,
+  priority,
+  description,
+  meta,
+  progress,
+  action,
+  projectId,
+}) => {
   return (
     <div className="task-card">
       <div className="task-header">
         <span className="task-title">{title}</span>
-        <span className="badge badge-blue">{status}</span>
-        <span className="badge badge-red">{priority}</span>
+        <span
+          className={
+            "badge badge-" +
+            (status == "De făcut"
+              ? "blue"
+              : status == "În progres"
+              ? "yellow"
+              : status == "Finalizat"
+              ? "green"
+              : "blue")
+          }
+        >
+          {status}
+        </span>
+        <span
+          className={
+            "badge badge-" +
+            (priority == "Ridicată"
+              ? "red"
+              : priority == "Medie"
+              ? "yellow"
+              : priority == "Scazută"
+              ? "green"
+              : "blue")
+          }
+        >
+          {priority}
+        </span>
       </div>
       <div className="task-desc">{description}</div>
       <div className="task-meta">
@@ -45,7 +80,11 @@ const TaskCard = ({ title, status, priority, description, meta, progress }) => {
       </div>
       <div className="task-actions">
         <button className="log-hours-btn">+ Loghează ore</button>
-        <select className="status-select">
+        <select
+          className="status-select"
+          onChange={(e) => action(e.target.value, projectId, description)}
+          defaultValue={status}
+        >
           <option>În progres</option>
           <option>De făcut</option>
           <option>Finalizat</option>
@@ -60,8 +99,46 @@ const VolunteerDashboard = () => {
   const [error, setError] = useState(null);
   const [pageSelected, setPageSelected] = useState("task-list");
   const [user, setUser] = useState(null);
+  const [update, setUpdate] = useState(false);
 
   const projectsService = new ProjectsService();
+
+  const onStatusChange = (newStatus, projectId, taskDescription) => {
+    console.log("Status schimbat:", newStatus);
+    console.log("ID Proiect:", projectId);
+    console.log("Descriere Task:", taskDescription);
+
+    // setUser((prevUser) => ({
+    //   ...prevUser,
+    //   projects: prevUser.projects.map((project) =>
+    //     project.id === projectId
+    //       ? {
+    //           ...project,
+    //           tasks: project.tasks.map((task) =>
+    //             task.descriere === taskDescription
+    //               ? { ...task, status: newStatus }
+    //               : task
+    //           ),
+    //         }
+    //       : project
+    //   ),
+    // }));
+
+    setUpdate((prev) => !prev); // Force re-render
+
+    const project = user.projects.find((p) => p.id === projectId);
+
+    const updatedTasks = project.tasks.map((task) =>
+      task.descriere === taskDescription ? { ...task, status: newStatus } : task
+    );
+    projectsService.updateProject(projectId, {
+      tasks: project.tasks.map((task) =>
+        task.descriere === taskDescription
+          ? { ...task, status: newStatus }
+          : task
+      ),
+    });
+  };
 
   useEffect(() => {
     const loadUser = async () => {
@@ -72,7 +149,7 @@ const VolunteerDashboard = () => {
         user.projects = await Promise.all(
           user.projects.map(async (project) => {
             const data = await projectsService.getProjectById(project);
-            return data;
+            return { ...data, id: project };
           })
         );
 
@@ -87,7 +164,7 @@ const VolunteerDashboard = () => {
     };
 
     loadUser();
-  }, []);
+  }, [update]);
 
   if (loading) {
     return (
@@ -151,19 +228,36 @@ const VolunteerDashboard = () => {
         <main className="dashboard-main">
           <h2 className="section-title">Task-urile Mele</h2>
           <div className="task-list">
-            {/* Task Card 1 */}
-            <TaskCard
-              title="Organizare donații textile"
-              status="În progres"
-              priority="Înaltă"
-              description="Sortarea și organizarea donațiilor de haine pentru distribuire"
-              meta={[
-                "🧹 Curățenie Parc",
-                "📅 Termen: 05.06.2025",
-                "⏱ 2.5h din 4h",
-              ]}
-              progress={63}
-            />
+            {user?.projects.length === 0 && <p>Nu exista taskuri</p>}
+            {user?.projects.map((project) => (
+              <div key={project.id} className="project-tasks">
+                <h3 className="project-title">{project.title}</h3>
+                {project.tasks?.length === 0 && (
+                  <p className="text-secondary">
+                    Nu există task-uri pentru acest proiect.
+                  </p>
+                )}{" "}
+                {project?.tasks?.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    projectId={project.id}
+                    title={task.titlu}
+                    status={task.status}
+                    priority={task.prioritate}
+                    description={task.descriere}
+                    meta={[
+                      `Data limită: ${new Date(
+                        task.termen.seconds
+                      ).toLocaleDateString()}`,
+                      `Ore logate: ${task.ore}h/${task.oreTarget}h`,
+                      `Locatie: ${task.locatie}`,
+                    ]}
+                    progress={(task.ore / task.oreTarget) * 100}
+                    action={onStatusChange}
+                  />
+                ))}
+              </div>
+            ))}
           </div>
         </main>
       )}
