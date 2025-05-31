@@ -1,25 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Calendar, MapPin, Users, Star, Heart, User, Building2, ChevronRight, Filter, ArrowRight } from 'lucide-react';
-import projectsService from '../../services/api/projects.js';
-import { Project } from '../../models/Project.js';
-import styles from './HomeScreen.module.css';
-import '../../styles/variables.css';    // 1. Variabilele
-import '../../styles/globals.css';       // 2. Reset-uri și stiluri de bază
-import '../../styles/typography.css';   // 3. Typography system
-import '../../styles/components.css'; 
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  Search,
+  Calendar,
+  MapPin,
+  Users,
+  Star,
+  Heart,
+  User,
+  Building2,
+  ChevronRight,
+  Filter,
+  ArrowRight,
+} from "lucide-react";
+import projectsService from "../../services/api/projects.js";
+import { Project } from "../../models/Project.js";
+import styles from "./HomeScreen.module.css";
+import "../../styles/variables.css"; // 1. Variabilele
+import "../../styles/globals.css"; // 2. Reset-uri și stiluri de bază
+import "../../styles/typography.css"; // 3. Typography system
+import "../../styles/components.css";
 const HomeScreen = () => {
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
     planned: 0,
-    totalVolunteers: 0
+    totalVolunteers: 0,
   });
 
   // Încarcă proiectele din Firebase
@@ -30,18 +42,21 @@ const HomeScreen = () => {
         const projectList = await projectsService.getAllProjects();
         setProjects(projectList);
         setFilteredProjects(projectList);
-        
+
         // Calculează statisticile
         const newStats = {
           total: projectList.length,
-          active: projectList.filter(p => p.status === 'Activ').length,
-          planned: projectList.filter(p => p.status === 'Planificat').length,
-          totalVolunteers: projectList.reduce((sum, p) => sum + p.currentVolunteers, 0)
+          active: projectList.filter((p) => p.status === "Activ").length,
+          planned: projectList.filter((p) => p.status === "Planificat").length,
+          totalVolunteers: projectList.reduce(
+            (sum, p) => sum + p.currentVolunteers,
+            0
+          ),
         };
         setStats(newStats);
       } catch (error) {
-        console.error('Eroare la încărcarea proiectelor:', error);
-        setError('Nu s-au putut încărca proiectele');
+        console.error("Eroare la încărcarea proiectelor:", error);
+        setError("Nu s-au putut încărca proiectele");
       } finally {
         setLoading(false);
       }
@@ -56,23 +71,29 @@ const HomeScreen = () => {
 
     // Filtrare după termen de căutare
     if (searchTerm.trim()) {
-      filtered = filtered.filter(project =>
-        project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.location.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (project) =>
+          project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          project.location.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Filtrare după status
-    if (selectedFilter !== 'all') {
-      filtered = filtered.filter(project => {
+    if (selectedFilter !== "all") {
+      filtered = filtered.filter((project) => {
         switch (selectedFilter) {
-          case 'active':
-            return project.status === 'Activ';
-          case 'planned':
-            return project.status === 'Planificat';
-          case 'available':
-            return project.status === 'Activ' && project.currentVolunteers < project.maxVolunteers;
+          case "active":
+            return project.status === "Activ";
+          case "planned":
+            return project.status === "Planificat";
+          case "available":
+            return (
+              project.status === "Activ" &&
+              project.currentVolunteers < project.maxVolunteers
+            );
           default:
             return true;
         }
@@ -84,24 +105,24 @@ const HomeScreen = () => {
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'Activ':
-        return 'badge-success';
-      case 'Planificat':
-        return 'badge-warning';
-      case 'Finalizat':
-        return 'badge-info';
+      case "Activ":
+        return "badge-success";
+      case "Planificat":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-info";
       default:
-        return 'badge-warning';
+        return "badge-warning";
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'Ridicată':
+      case "Ridicată":
         return styles.priorityHigh;
-      case 'Medie':
+      case "Medie":
         return styles.priorityMedium;
-      case 'Scăzută':
+      case "Scăzută":
         return styles.priorityLow;
       default:
         return styles.priorityMedium;
@@ -121,7 +142,7 @@ const HomeScreen = () => {
     return (
       <div className={styles.error}>
         <p className="text-lg text-error">{error}</p>
-        <button 
+        <button
           className="btn btn-primary"
           onClick={() => window.location.reload()}
         >
@@ -139,9 +160,14 @@ const HomeScreen = () => {
           <div className={styles.headerContent}>
             <div className={styles.logo}>
               <h1 className="text-h2 text-brand">Platformă Voluntari</h1>
-              <p className="text-subtitle">Conectând comunități prin voluntariat</p>
+              <p className="text-subtitle">
+                Conectând comunități prin voluntariat
+              </p>
             </div>
-            <Link to="/login" className={`btn btn-secondary ${styles.loginBtn}`}>
+            <Link
+              to="/login"
+              className={`btn btn-secondary ${styles.loginBtn}`}
+            >
               <User size={20} />
               Login
             </Link>
@@ -157,9 +183,10 @@ const HomeScreen = () => {
               Descoperă proiecte și fă diferența în comunitate
             </h2>
             <p className="text-lead text-secondary">
-              Conectează-te cu organizații locale și contribuie la cauze care îți pasă
+              Conectează-te cu organizații locale și contribuie la cauze care
+              îți pasă
             </p>
-            
+
             <div className={styles.actionCards}>
               <div className="card">
                 <div className="card-body">
@@ -170,23 +197,28 @@ const HomeScreen = () => {
                   <p className="text-base text-secondary">
                     Caută și aplică la proiecte care te inspiră
                   </p>
-                  <Link to="/proiecte" className="btn btn-primary">
+                  <Link to="/dashboard/voluntar" className="btn btn-primary">
                     Explorează Proiecte
                     <ChevronRight size={18} />
                   </Link>
                 </div>
               </div>
-              
+
               <div className="card">
                 <div className="card-body">
-                  <div className={`${styles.actionIcon} ${styles.organizerIcon}`}>
+                  <div
+                    className={`${styles.actionIcon} ${styles.organizerIcon}`}
+                  >
                     <Building2 size={32} />
                   </div>
                   <h3 className="text-h4">Sunt Organizator</h3>
                   <p className="text-base text-secondary">
                     Creează și gestionează proiecte de voluntariat
                   </p>
-                  <Link to="/dashboard/organizator/creeaza-proiect" className="btn btn-secondary">
+                  <Link
+                    to="/dashboard/organizator/creeaza-proiect"
+                    className="btn btn-secondary"
+                  >
                     Creează Proiect
                     <ChevronRight size={18} />
                   </Link>
@@ -230,7 +262,7 @@ const HomeScreen = () => {
               Găsește proiecte care se potrivesc intereselor tale
             </p>
           </div>
-          
+
           <div className={styles.searchControls}>
             <div className={styles.searchInput}>
               <Search className={styles.searchIcon} size={20} />
@@ -242,7 +274,7 @@ const HomeScreen = () => {
                 className={styles.input}
               />
             </div>
-            
+
             <div className={styles.filters}>
               <Filter size={20} />
               <select
@@ -265,7 +297,9 @@ const HomeScreen = () => {
         <div className={styles.container}>
           {filteredProjects.length === 0 ? (
             <div className={styles.noProjects}>
-              <p className="text-lg text-secondary">Nu s-au găsit proiecte care să corespundă criteriilor tale.</p>
+              <p className="text-lg text-secondary">
+                Nu s-au găsit proiecte care să corespundă criteriilor tale.
+              </p>
             </div>
           ) : (
             <div className={styles.projectsGrid}>
@@ -290,25 +324,67 @@ const HomeScreen = () => {
             <div className={styles.footerSection}>
               <h6 className="text-h6">Pentru Voluntari</h6>
               <ul className={styles.footerLinks}>
-                <li><Link to="/proiecte" className="link-muted">Caută Proiecte</Link></li>
-                <li><Link to="/cum-functioneaza" className="link-muted">Cum Funcționează</Link></li>
-                <li><Link to="/comunitate" className="link-muted">Comunitate</Link></li>
+                <li>
+                  <Link to="/proiecte" className="link-muted">
+                    Caută Proiecte
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/cum-functioneaza" className="link-muted">
+                    Cum Funcționează
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/comunitate" className="link-muted">
+                    Comunitate
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className={styles.footerSection}>
               <h6 className="text-h6">Pentru Organizații</h6>
               <ul className={styles.footerLinks}>
-                <li><Link to="/dashboard/organizator/creeaza-proiect" className="link-muted">Creează Proiect</Link></li>
-                <li><Link to="/dashboard/organizator/voluntari" className="link-muted">Gestionează Voluntari</Link></li>
-                <li><Link to="/ajutor" className="link-muted">Resurse</Link></li>
+                <li>
+                  <Link
+                    to="/dashboard/organizator/creeaza-proiect"
+                    className="link-muted"
+                  >
+                    Creează Proiect
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/dashboard/organizator/voluntari"
+                    className="link-muted"
+                  >
+                    Gestionează Voluntari
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/ajutor" className="link-muted">
+                    Resurse
+                  </Link>
+                </li>
               </ul>
             </div>
             <div className={styles.footerSection}>
               <h6 className="text-h6">Suport</h6>
               <ul className={styles.footerLinks}>
-                <li><Link to="/contact" className="link-muted">Contact</Link></li>
-                <li><Link to="/ajutor" className="link-muted">FAQ</Link></li>
-                <li><Link to="/termeni" className="link-muted">Termeni</Link></li>
+                <li>
+                  <Link to="/contact" className="link-muted">
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/ajutor" className="link-muted">
+                    FAQ
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/termeni" className="link-muted">
+                    Termeni
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -327,24 +403,24 @@ const HomeScreen = () => {
 const ProjectCard = ({ project }) => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'Activ':
-        return 'badge-success';
-      case 'Planificat':
-        return 'badge-warning';
-      case 'Finalizat':
-        return 'badge-info';
+      case "Activ":
+        return "badge-success";
+      case "Planificat":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-info";
       default:
-        return 'badge-warning';
+        return "badge-warning";
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'Ridicată':
+      case "Ridicată":
         return styles.priorityHigh;
-      case 'Medie':
+      case "Medie":
         return styles.priorityMedium;
-      case 'Scăzută':
+      case "Scăzută":
         return styles.priorityLow;
       default:
         return styles.priorityMedium;
@@ -352,11 +428,11 @@ const ProjectCard = ({ project }) => {
   };
 
   const formatDate = (date) => {
-    if (!date) return 'Nu este stabilită';
-    return new Intl.DateTimeFormat('ro-RO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    if (!date) return "Nu este stabilită";
+    return new Intl.DateTimeFormat("ro-RO", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     }).format(date);
   };
 
@@ -367,21 +443,27 @@ const ProjectCard = ({ project }) => {
           <div className={`badge ${getStatusBadgeClass(project.status)}`}>
             {project.status}
           </div>
-          <div className={`${styles.priority} ${getPriorityColor(project.priority)}`}>
+          <div
+            className={`${styles.priority} ${getPriorityColor(
+              project.priority
+            )}`}
+          >
             {project.priority}
           </div>
         </div>
       </div>
-      
+
       <div className="card-body">
         <h4 className="text-h4">{project.title}</h4>
-        <p className="text-sm text-secondary" style={{ marginBottom: 'var(--spacing-md)' }}>
-          {project.description.length > 120 
-            ? `${project.description.substring(0, 120)}...` 
-            : project.description
-          }
+        <p
+          className="text-sm text-secondary"
+          style={{ marginBottom: "var(--spacing-md)" }}
+        >
+          {project.description.length > 120
+            ? `${project.description.substring(0, 120)}...`
+            : project.description}
         </p>
-        
+
         <div className={styles.projectMeta}>
           <div className={styles.metaItem}>
             <MapPin size={16} />
@@ -420,25 +502,29 @@ const ProjectCard = ({ project }) => {
             <span className="text-sm text-secondary">{project.progress}%</span>
           </div>
           <div className={styles.progressBar}>
-            <div 
+            <div
               className={styles.progressFill}
               style={{ width: `${project.progress}%` }}
             ></div>
           </div>
         </div>
       </div>
-      
+
       <div className="card-footer">
         <div className={styles.cardActions}>
           <Link to={`/proiecte/${project.id}`} className="btn btn-secondary">
             Vezi Detalii
           </Link>
-          {project.status === 'Activ' && project.currentVolunteers < project.maxVolunteers && (
-            <Link to={`/proiecte/${project.id}/aplica`} className="btn btn-primary">
-              Aplică Acum
-              <ArrowRight size={16} />
-            </Link>
-          )}
+          {project.status === "Activ" &&
+            project.currentVolunteers < project.maxVolunteers && (
+              <Link
+                to={`/proiecte/${project.id}/aplica`}
+                className="btn btn-primary"
+              >
+                Aplică Acum
+                <ArrowRight size={16} />
+              </Link>
+            )}
         </div>
       </div>
     </div>
