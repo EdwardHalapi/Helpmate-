@@ -153,6 +153,27 @@ const VolunteerDashboard = () => {
           })
         );
 
+        user.pending = await Promise.all(
+          user.pending?.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
+        user.refused = await Promise.all(
+          user.refused?.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
+        user.accepted = await Promise.all(
+          user.accepted?.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
         console.log("Utilizator încărcat:", user);
         setUser(user);
       } catch (error) {
@@ -306,7 +327,14 @@ const VolunteerDashboard = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className={styles.my_container}></div>
+                  <div className={styles.my_container}>
+                    {user?.pending?.map((project) => (
+                      <>
+                        <h1>{project.title} - pending</h1>
+                        <br />
+                      </>
+                    ))}
+                  </div>
                 )}
               </div>
             </section>
@@ -318,6 +346,7 @@ const VolunteerDashboard = () => {
     </div>
   );
 };
+
 const ProjectAplication = ({ project }) => {
   const navigate = useNavigate();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);

@@ -1,8 +1,9 @@
 /* HomeScreen.module.css */
 .containerAplication {
   max-width: 2400px;
-  margin: 0 auto;
   padding: 0 var(--spacing-md);
+}
+.my_container {
   display: flex;
   align-items: center;
   box-sizing: border-box;
