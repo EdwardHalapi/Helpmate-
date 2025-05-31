@@ -1,36 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./VolunteerDashboard.css";
 import "../../styles/variables.css";
 import "../../styles/globals.css";
 import "../../styles/typography.css";
 import "../../styles/components.css";
+import { volunteerService } from "../../services/api/volunteers.js";
+import Header from "../../components/layout/Header/Header.jsx";
 
-const TaskCard = ({
-  title,
-  status,
-  priority,
-  description,
-  meta,
-  progress,
-  actions,
-}) => {
+const TaskCard = ({ title, status, priority, description, meta, progress }) => {
   return (
     <div className="task-card">
       <div className="task-header">
-        <span className="task-title">Organizare donații textile</span>
-        <span className="badge badge-blue">În progres</span>
-        <span className="badge badge-red">Prioritate înaltă</span>
+        <span className="task-title">{title}</span>
+        <span className="badge badge-blue">{status}</span>
+        <span className="badge badge-red">{priority}</span>
       </div>
-      <div className="task-desc">
-        Sortarea și organizarea donațiilor de haine pentru distribuire
-      </div>
+      <div className="task-desc">{description}</div>
       <div className="task-meta">
-        <span className="meta-item">🧹 Curățenie Parc</span>
-        <span className="meta-item">📅 Termen: 05.06.2025</span>
-        <span className="meta-item">⏱ 2.5h din 4h</span>
+        <span className="meta-item">{meta[0]}</span>
+        <span className="meta-item">{meta[1]}</span>
+        <span className="meta-item">{meta[2]}</span>
       </div>
       <div className="progress-bar">
-        <div className="progress-fill" style={{ width: "63%" }}></div>
+        <div className="progress-fill" style={{ width: progress + "%" }}></div>
       </div>
       <div className="task-actions">
         <button className="log-hours-btn">+ Loghează ore</button>
@@ -46,33 +38,60 @@ const TaskCard = ({
 
 const VolunteerDashboard = () => {
   const [pageSelected, setPageSelected] = useState("task-list");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        setLoading(true);
+        const user = await volunteerService.getById("75ytUh3LjYvs5EXF6itS"); // Exemplu de ID
+        console.log("Utilizator încărcat:", user);
+        setUser(user);
+      } catch (error) {
+        console.error("Eroare la încărcarea proiectelor:", error);
+        setError("Nu s-a putut încărca utilizatorul");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <p className="text-lg text-secondary">Încărcăm utilizatorul...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error">
+        <p className="text-lg text-error">{error}</p>
+        <button
+          className="btn btn-primary"
+          onClick={() => window.location.reload()}
+        >
+          Încearcă din nou
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
       {/* Header */}
-      <header className="dashboard-header">
-        <div className="user-info">
-          <div className="avatar">MR</div>
-          <div>
-            <div className="welcome">Bun venit, Maria Rosca</div>
-            <div className="subtitle">Dashboard Voluntar</div>
-          </div>
-        </div>
-        <div className="stats">
-          <div>
-            <span className="stat-value stat-purple">45h</span>
-            <div className="stat-label">Ore totale</div>
-          </div>
-          <div>
-            <span className="stat-value stat-green">12</span>
-            <div className="stat-label">Task-uri finalizate</div>
-          </div>
-          <div>
-            <span className="stat-value stat-blue">2</span>
-            <div className="stat-label">Proiecte active</div>
-          </div>
-        </div>
-      </header>
+      <Header
+        name={user?.firstName + " " + user?.lastName}
+        oreTotale={user?.totalHours || 0}
+        taskuriFinalizate={1}
+        proiecteActive={user?.totalProjects || 0}
+      />
 
       {/* Tabs */}
       <nav className="dashboard-tabs">
@@ -113,7 +132,6 @@ const VolunteerDashboard = () => {
                 "⏱ 2.5h din 4h",
               ]}
               progress={63}
-              actions={["Loghează ore", "Schimbă status"]}
             />
           </div>
         </main>
