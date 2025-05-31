@@ -80,7 +80,9 @@ function App() {
       <div className="App">
         <Routes>
           {/* Pagina principală - HomeScreen implementat */}
-          <Route path="/" element={<HomeScreen />} />
+          <Route path="/" element={<HomeScreen />}>
+            <Route path="proiecte/:projectId/donează" element={<DonationScreen />} />
+          </Route>
           
           {/* Autentificare */}
           <Route path="/login" element={<LoginScreen />} />
@@ -90,7 +92,6 @@ function App() {
           {/* Proiecte */}
           <Route path="/proiecte" element={<ProjectsScreen />} />
           <Route path="/proiecte/:id" element={<ProjectDetailsScreen />} />
-          <Route path="/proiecte/:projectId/donează" element={<DonationScreen />} />
           <Route path="/proiecte/:id/susține" element={<PlaceholderPage pageName="Susține ca Voluntar" />} />
           <Route path="/proiecte/categorie/:category" element={<PlaceholderPage pageName="Proiecte pe Categorie" />} />
           

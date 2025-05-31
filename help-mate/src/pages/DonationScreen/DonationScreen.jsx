@@ -147,10 +147,13 @@ const DonationScreen = () => {
       const updatedProject = await projectsService.getProjectById(projectId);
       setProject(updatedProject);
       setShowSuccess(true);
+      setTimeout(() => {
+        navigate(-1);
+      }, 2000);
 
     } catch (error) {
       console.error('Error processing donation:', error);
-      alert(`Eroare la procesarea donației: ${error.message}`);
+      setError('Nu s-a putut procesa donația');
     }
   };
 
@@ -158,9 +161,22 @@ const DonationScreen = () => {
     navigate(-1);
   };
 
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   if (error) {
     return (
-      <div className={styles.donationOverlay}>
+      <div className={styles.donationOverlay} onClick={handleOverlayClick}>
         <div className={styles.donationModal}>
           <div className={styles.errorScreen}>
             <h2>Oops! A apărut o eroare</h2>
@@ -179,7 +195,7 @@ const DonationScreen = () => {
 
   if (loading) {
     return (
-      <div className={styles.donationOverlay}>
+      <div className={styles.donationOverlay} onClick={handleOverlayClick}>
         <div className={styles.donationModal}>
           <div className={styles.loadingScreen}>
             <div className={styles.spinner}></div>
@@ -192,7 +208,7 @@ const DonationScreen = () => {
 
   if (showSuccess) {
     return (
-      <div className={styles.donationOverlay}>
+      <div className={styles.donationOverlay} onClick={handleOverlayClick}>
         <div className={styles.donationModal}>
           <div className={styles.successScreen}>
             <CheckCircle size={64} className={styles.successIcon} />
@@ -211,8 +227,8 @@ const DonationScreen = () => {
   }
 
   return (
-    <div className={styles.donationOverlay}>
-      <div className={styles.donationModal}>
+    <div className={styles.donationOverlay} onClick={handleOverlayClick}>
+      <div className={styles.donationModal} onClick={e => e.stopPropagation()}>
         <button className={styles.closeButton} onClick={handleClose}>
           <X size={24} />
         </button>

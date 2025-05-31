@@ -19,7 +19,8 @@ import {
   CreditCard,
   CheckCircle2,
   AlertCircle,
-  CircleDot
+  CircleDot,
+  ArrowRight
 } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
@@ -35,6 +36,8 @@ const ProjectDetailsScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
 
   useEffect(() => {
     let unsubscribe;
@@ -45,7 +48,24 @@ const ProjectDetailsScreen = () => {
         // Set up real-time listener
         unsubscribe = onSnapshot(doc(db, 'projects', id), (doc) => {
           if (doc.exists()) {
-            setProject({ id: doc.id, ...doc.data() });
+            // Create a new Project instance with the data
+            const projectData = doc.data();
+            const projectInstance = new Project({
+              id: doc.id,
+              ...projectData,
+              // Safely convert timestamps to Date objects
+              createdAt: projectData.createdAt?.toDate?.() || new Date(),
+              updatedAt: projectData.updatedAt?.toDate?.() || new Date(),
+              startDate: projectData.startDate?.toDate?.() || null,
+              endDate: projectData.endDate?.toDate?.() || null,
+              lastDonationAt: projectData.lastDonationAt?.toDate?.() || null,
+              // Ensure other date fields are properly handled
+              donations: (projectData.donations || []).map(donation => ({
+                ...donation,
+                timestamp: donation.timestamp?.toDate?.() || new Date(donation.timestamp) || new Date()
+              }))
+            });
+            setProject(projectInstance);
             setLoading(false);
           } else {
             setError('Proiectul nu a fost găsit');
@@ -137,6 +157,43 @@ const ProjectDetailsScreen = () => {
     }).format(new Date(timestamp));
   };
 
+  const handleApplyClick = async () => {
+    try {
+      // For now, we'll use a mock volunteer data since we don't have auth yet
+      const mockVolunteer = {
+        volunteerId: 'mock-volunteer-id',
+        name: 'John Doe',
+        email: 'john@example.com'
+      };
+
+      // Update project with new application
+      await projectsService.updateProject(id, {
+        pendingVolunteers: [
+          ...(project.pendingVolunteers || []),
+          {
+            volunteerId: mockVolunteer.volunteerId,
+            status: 'Pending',
+            appliedAt: new Date().toISOString(),
+            name: mockVolunteer.name,
+            email: mockVolunteer.email
+          }
+        ]
+      });
+
+      // Show success message
+      setShowSuccessMessage(true);
+      setApplicationStatus('Pending');
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error applying to project:', error);
+      // You might want to show an error message here
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -211,6 +268,36 @@ const ProjectDetailsScreen = () => {
                 
                 <h1 className="text-h1">{project.title}</h1>
                 <p className="text-lead text-secondary">{project.description}</p>
+
+                <div className={styles.projectActions}>
+                  <Link 
+                    to={`/proiecte/${id}/donează`}
+                    className={`btn btn-error ${styles.actionButton}`}
+                  >
+                    <Heart size={20} />
+                    Donează
+                  </Link>
+
+                  {project.status !== 'Finalizat' && project.progress < 100 && (
+                    <>
+                      {showSuccessMessage ? (
+                        <div className={styles.successMessage}>
+                          <CheckCircle size={20} />
+                          Aplicare trimisă cu succes!
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={handleApplyClick} 
+                          className={`btn btn-primary ${styles.actionButton}`}
+                          disabled={applicationStatus === 'Pending'}
+                        >
+                          {applicationStatus === 'Pending' ? 'Aplicare în așteptare' : 'Susține'}
+                          <ArrowRight size={20} />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className={styles.quickStats}>
@@ -244,31 +331,6 @@ const ProjectDetailsScreen = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Action Buttons */}
-      <section className={styles.actionSection}>
-        <div className={styles.container}>
-          <div className={styles.actionButtons}>
-            <Link to={`/proiecte/${project.id}/donează`} className="btn btn-error">
-              <Heart size={20} />
-              Donează pentru proiect
-            </Link>
-            {project.status === 'Activ' && 
-             project.currentVolunteers < project.maxVolunteers && 
-             project.progress > 0 && (
-              <Link to={`/proiecte/${project.id}/susține`} className="btn btn-primary">
-                <Users size={20} />
-                Susține ca voluntar
-              </Link>
-            )}
-            <ShareButtons 
-              url={window.location.href} 
-              title={project.title}
-              description={project.description}
-            />
           </div>
         </div>
       </section>
@@ -346,19 +408,21 @@ const ProjectDetailsScreen = () => {
                         <h4 className="text-h4">Progres proiect</h4>
                         <div className={styles.progressSection}>
                           <div className={styles.progressHeader}>
-                            <span className="text-lg font-bold">{project.progress}%</span>
+                            <span className="text-lg font-bold">{project.progress || 0}%</span>
                             <span className="text-sm text-secondary">completat</span>
                           </div>
                           <div className={styles.progressBar}>
                             <div 
                               className={styles.progressFill}
-                              style={{ width: `${project.progress}%` }}
+                              style={{ width: `${project.progress || 0}%` }}
                             ></div>
                           </div>
                           <div className={styles.progressStats}>
                             <div className={styles.progressStat}>
                               <span className="text-sm text-muted">Task-uri completate</span>
-                              <span className="text-sm font-medium">{project.completedTasks}/{project.totalTasks}</span>
+                              <span className="text-sm font-medium">
+                                {project.completedTasks || 0}/{project.totalTasks || 0}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -533,21 +597,21 @@ const ProjectDetailsScreen = () => {
                       <div className={styles.progressMetric}>
                         <Target size={32} />
                         <div>
-                          <span className="text-2xl font-bold">{project.progress}%</span>
+                          <span className="text-2xl font-bold">{project.progress || 0}%</span>
                           <p className="text-sm text-secondary">Progres general</p>
                         </div>
                       </div>
                       <div className={styles.progressMetric}>
                         <CheckCircle size={32} />
                         <div>
-                          <span className="text-2xl font-bold">{project.completedTasks}</span>
+                          <span className="text-2xl font-bold">{project.completedTasks || 0}</span>
                           <p className="text-sm text-secondary">Task-uri completate</p>
                         </div>
                       </div>
                       <div className={styles.progressMetric}>
                         <Clock size={32} />
                         <div>
-                          <span className="text-2xl font-bold">{project.totalHours}</span>
+                          <span className="text-2xl font-bold">{project.totalHours || 0}</span>
                           <p className="text-sm text-secondary">Ore lucrate</p>
                         </div>
                       </div>
@@ -556,12 +620,12 @@ const ProjectDetailsScreen = () => {
                     <div className={styles.progressBar}>
                       <div 
                         className={styles.progressFill}
-                        style={{ width: `${project.progress}%` }}
+                        style={{ width: `${project.progress || 0}%` }}
                       ></div>
                     </div>
                     
                     <p className="text-sm text-secondary text-center">
-                      {project.completedTasks} din {project.totalTasks} task-uri completate
+                      {project.completedTasks || 0} din {project.totalTasks || 0} task-uri completate
                     </p>
                   </div>
                 </div>
@@ -598,8 +662,7 @@ const ProjectDetailsScreen = () => {
                     </div>
                     
                     {project.status === 'Activ' && 
-                     project.currentVolunteers < project.maxVolunteers && 
-                     project.progress > 0 && (
+                     project.currentVolunteers < project.maxVolunteers && (
                       <div className={styles.joinTeam}>
                         <h4 className="text-h4">Alătură-te echipei!</h4>
                         <p className="text-base text-secondary">
