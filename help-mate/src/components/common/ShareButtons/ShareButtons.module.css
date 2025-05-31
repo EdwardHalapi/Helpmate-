@@ -1,0 +1,69 @@
+.shareContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.shareButton {
+  background: none;
+  border: none;
+  padding: var(--spacing-sm);
+  color: var(--gray-600);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shareButton:hover {
+  background-color: var(--gray-100);
+  color: var(--gray-900);
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xs);
+  min-width: 200px;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.shareOption {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: none;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-md);
+}
+
+.shareOption:hover {
+  background-color: var(--gray-50);
+  color: var(--gray-900);
+}
+
+.shareOption span {
+  font-size: 0.875rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

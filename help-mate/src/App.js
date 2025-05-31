@@ -2,8 +2,16 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
+// Import all CSS files with correct paths
+import './styles/variables.css';
+import './styles/globals.css';
+import './styles/typography.css';
+import './styles/components.css';
+
 // Import pages - doar HomeScreen este implementat momentan
 import HomeScreen from './pages/HomeScreen/HomeScreen';
+import ProjectDetailsScreen from './pages/ProjectDetails/ProjectDetailsScreen';
+import DonationScreen from './pages/DonationScreen/DonationScreen';
 
 // Placeholder components pentru paginile care vor fi implementate
 const PlaceholderPage = ({ pageName }) => (
@@ -29,7 +37,7 @@ const PlaceholderPage = ({ pageName }) => (
 
 // Componente placeholder pentru paginile viitoare
 const ProjectsScreen = () => <PlaceholderPage pageName="Lista Proiecte" />;
-const ProjectDetailsScreen = () => <PlaceholderPage pageName="Detalii Proiect" />;
+const ProjectDetailsScreenPlaceholder = () => <PlaceholderPage pageName="Detalii Proiect" />;
 const LoginScreen = () => <PlaceholderPage pageName="Login" />;
 const RegisterScreen = () => <PlaceholderPage pageName="Înregistrare" />;
 const VolunteerDashboard = () => <PlaceholderPage pageName="Dashboard Voluntar" />;
@@ -74,7 +82,7 @@ function App() {
           {/* Pagina principală - HomeScreen implementat */}
           <Route path="/" element={<HomeScreen />} />
           
-         
+          {/* Autentificare */}
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
           <Route path="/forgot-password" element={<PlaceholderPage pageName="Resetare Parolă" />} />
@@ -82,6 +90,8 @@ function App() {
           {/* Proiecte */}
           <Route path="/proiecte" element={<ProjectsScreen />} />
           <Route path="/proiecte/:id" element={<ProjectDetailsScreen />} />
+          <Route path="/proiecte/:projectId/donează" element={<DonationScreen />} />
+          <Route path="/proiecte/:id/susține" element={<PlaceholderPage pageName="Susține ca Voluntar" />} />
           <Route path="/proiecte/categorie/:category" element={<PlaceholderPage pageName="Proiecte pe Categorie" />} />
           
           {/* Dashboard Voluntar */}
