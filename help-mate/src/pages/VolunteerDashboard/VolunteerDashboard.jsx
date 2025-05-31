@@ -56,19 +56,8 @@ const TaskCard = ({ title, status, priority, description, meta, progress }) => {
 };
 
 const VolunteerDashboard = () => {
-  const location = useLocation();
-  const [projects, setProjects] = useState([]);
-  const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    planned: 0,
-    totalVolunteers: 0,
-  });
   const [pageSelected, setPageSelected] = useState("task-list");
   const [user, setUser] = useState(null);
 
@@ -99,73 +88,6 @@ const VolunteerDashboard = () => {
 
     loadUser();
   }, []);
-
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        setLoading(true);
-        const projectList = await projectsService.getAllProjects();
-        setProjects(projectList);
-        setFilteredProjects(projectList);
-
-        // Calculează statisticile
-        const newStats = {
-          total: projectList.length,
-          active: projectList.filter((p) => p.status === "Activ").length,
-          planned: projectList.filter((p) => p.status === "Planificat").length,
-          totalVolunteers: projectList.reduce(
-            (sum, p) => sum + p.currentVolunteers,
-            0
-          ),
-        };
-        setStats(newStats);
-      } catch (error) {
-        console.error("Eroare la încărcarea proiectelor:", error);
-        setError("Nu s-au putut încărca proiectele");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProjects();
-  }, []);
-
-  useEffect(() => {
-    let filtered = projects;
-
-    // Filtrare după termen de căutare
-    if (searchTerm.trim()) {
-      filtered = filtered.filter(
-        (project) =>
-          project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          project.location.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filtrare după status
-    if (selectedFilter !== "all") {
-      filtered = filtered.filter((project) => {
-        switch (selectedFilter) {
-          case "active":
-            return project.status === "Activ";
-          case "planned":
-            return project.status === "Planificat";
-          case "available":
-            return (
-              project.status === "Activ" &&
-              project.currentVolunteers < project.maxVolunteers
-            );
-          default:
-            return true;
-        }
-      });
-    }
-
-    setFilteredProjects(filtered);
-  }, [projects, searchTerm, selectedFilter]);
 
   if (loading) {
     return (
@@ -253,7 +175,7 @@ const VolunteerDashboard = () => {
             {/* Projects Section */}
             <section className={styles.projects}>
               <div className={styles.container}>
-                {filteredProjects.length === 0 ? (
+                {user?.projects.length === 0 ? (
                   <div className={styles.noProjects}>
                     <p className="text-lg text-secondary">
                       Nu s-au găsit proiecte care să corespundă criteriilor
@@ -262,7 +184,7 @@ const VolunteerDashboard = () => {
                   </div>
                 ) : (
                   <div className={styles.projectsGrid}>
-                    {filteredProjects.map((project) => (
+                    {user?.projects.map((project) => (
                       <ProjectCard key={project.id} project={project} />
                     ))}
                   </div>
