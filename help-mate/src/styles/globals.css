@@ -76,7 +76,7 @@ body {
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
     --text-primary: #f9fafb;
     --text-secondary: #d1d5db;
