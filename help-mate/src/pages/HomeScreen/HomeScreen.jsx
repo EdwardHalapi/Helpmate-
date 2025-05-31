@@ -4,10 +4,7 @@ import { Search, Calendar, MapPin, Users, Star, Heart, User, Building2, ChevronR
 import projectsService from '../../services/api/projects.js';
 import { Project } from '../../models/Project.js';
 import styles from './HomeScreen.module.css';
-import '../../styles/variables.css';    // 1. Variabilele
-import '../../styles/globals.css';       // 2. Reset-uri și stiluri de bază
-import '../../styles/typography.css';   // 3. Typography system
-import '../../styles/components.css'; 
+
 const HomeScreen = () => {
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
@@ -361,87 +358,98 @@ const ProjectCard = ({ project }) => {
   };
 
   return (
-    <div className={`card ${styles.projectCard}`}>
-      <div className="card-header">
-        <div className={styles.cardHeader}>
-          <div className={`badge ${getStatusBadgeClass(project.status)}`}>
-            {project.status}
-          </div>
-          <div className={`${styles.priority} ${getPriorityColor(project.priority)}`}>
-            {project.priority}
+    <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
+      <div className={`card ${styles.projectCard}`}>
+        <div className="card-header">
+          <div className={styles.cardHeader}>
+            <div className={`badge ${getStatusBadgeClass(project.status)}`}>
+              {project.status}
+            </div>
+            <div className={`${styles.priority} ${getPriorityColor(project.priority)}`}>
+              {project.priority}
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="card-body">
-        <h4 className="text-h4">{project.title}</h4>
-        <p className="text-sm text-secondary" style={{ marginBottom: 'var(--spacing-md)' }}>
-          {project.description.length > 120 
-            ? `${project.description.substring(0, 120)}...` 
-            : project.description
-          }
-        </p>
         
-        <div className={styles.projectMeta}>
-          <div className={styles.metaItem}>
-            <MapPin size={16} />
-            <span className="text-sm">{project.location}</span>
+        <div className="card-body">
+          <h4 className="text-h4">{project.title}</h4>
+          <p className="text-sm text-secondary" style={{ marginBottom: 'var(--spacing-md)' }}>
+            {project.description.length > 120 
+              ? `${project.description.substring(0, 120)}...` 
+              : project.description
+            }
+          </p>
+          
+          <div className={styles.projectMeta}>
+            <div className={styles.metaItem}>
+              <MapPin size={16} />
+              <span className="text-sm">{project.location}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <Calendar size={16} />
+              <span className="text-sm">{formatDate(project.startDate)}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <Users size={16} />
+              <span className="text-sm">
+                {project.currentVolunteers}/{project.maxVolunteers} voluntari
+              </span>
+            </div>
           </div>
-          <div className={styles.metaItem}>
-            <Calendar size={16} />
-            <span className="text-sm">{formatDate(project.startDate)}</span>
-          </div>
-          <div className={styles.metaItem}>
-            <Users size={16} />
-            <span className="text-sm">
-              {project.currentVolunteers}/{project.maxVolunteers} voluntari
-            </span>
+
+          {project.requiredSkills.length > 0 && (
+            <div className={styles.skills}>
+              {project.requiredSkills.slice(0, 3).map((skill, index) => (
+                <span key={index} className={`badge ${styles.skillBadge}`}>
+                  {skill}
+                </span>
+              ))}
+              {project.requiredSkills.length > 3 && (
+                <span className="text-xs text-muted">
+                  +{project.requiredSkills.length - 3} mai multe
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className={styles.progress}>
+            <div className={styles.progressHeader}>
+              <span className="text-sm font-medium">Progres</span>
+              <span className="text-sm text-secondary">{project.progress}%</span>
+            </div>
+            <div className={styles.progressBar}>
+              <div 
+                className={styles.progressFill}
+                style={{ width: `${project.progress}%` }}
+              ></div>
+            </div>
           </div>
         </div>
-
-        {project.requiredSkills.length > 0 && (
-          <div className={styles.skills}>
-            {project.requiredSkills.slice(0, 3).map((skill, index) => (
-              <span key={index} className={`badge ${styles.skillBadge}`}>
-                {skill}
-              </span>
-            ))}
-            {project.requiredSkills.length > 3 && (
-              <span className="text-xs text-muted">
-                +{project.requiredSkills.length - 3} mai multe
-              </span>
+        
+        <div className="card-footer">
+          <div className={styles.cardActions} onClick={(e) => e.preventDefault()}>
+            <Link to={`/proiecte/${project.id}/donează`} className="btn btn-error">
+              <Heart size={16} />
+              Donează
+            </Link>
+            {project.status !== 'Finalizat' && (
+              <Link to={`/proiecte/${project.id}/voluntar`} className="btn btn-secondary">
+                <User size={16} />
+                Voluntar
+              </Link>
+            )}
+            {project.status === 'Activ' && 
+             project.currentVolunteers < project.maxVolunteers && 
+             project.progress > 0 && (
+              <Link to={`/proiecte/${project.id}/susține`} className="btn btn-primary">
+                Susține
+                <ArrowRight size={16} />
+              </Link>
             )}
           </div>
-        )}
-
-        <div className={styles.progress}>
-          <div className={styles.progressHeader}>
-            <span className="text-sm font-medium">Progres</span>
-            <span className="text-sm text-secondary">{project.progress}%</span>
-          </div>
-          <div className={styles.progressBar}>
-            <div 
-              className={styles.progressFill}
-              style={{ width: `${project.progress}%` }}
-            ></div>
-          </div>
         </div>
       </div>
-      
-      <div className="card-footer">
-        <div className={styles.cardActions}>
-          <Link to={`/proiecte/${project.id}`} className="btn btn-secondary">
-            Vezi Detalii
-          </Link>
-          {project.status === 'Activ' && project.currentVolunteers < project.maxVolunteers && (
-            <Link to={`/proiecte/${project.id}/aplica`} className="btn btn-primary">
-              Aplică Acum
-              <ArrowRight size={16} />
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
+    </Link>
   );
 };
 

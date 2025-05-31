@@ -1,4 +1,5 @@
 /* HomeScreen.module.css */
+
 .homeScreen {
   min-height: 100vh;
   background-color: var(--bg-secondary);
@@ -187,11 +188,23 @@
 }
 
 /* Project Card */
+.projectCardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.projectCardLink:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
 .projectCard {
   height: 100%;
   display: flex;
   flex-direction: column;
   transition: all var(--transition-normal);
+  cursor: pointer;
 }
 
 .projectCard:hover {
@@ -457,7 +470,7 @@
 }
 
 /* Dark mode adjustments */
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   .hero {
     background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
   }
