@@ -9,6 +9,7 @@ const SCROLL_POSITION_KEY = 'homeScreenScrollPosition';
 
 const HomeScreen = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
