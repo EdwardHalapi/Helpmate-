@@ -1,215 +1,248 @@
 .card {
-  background: white;
+  background: var(--color-background-secondary);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  transition: all 0.2s ease-in-out;
-  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  border: 1px solid var(--color-border);
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .cardContent {
-  margin-bottom: 1.5rem;
-}
-
-.cardHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.cardContent h3 {
-  margin: 0 0 1rem;
+.cardTitle {
   font-size: 1.25rem;
-  color: #2d3748;
   font-weight: 600;
-}
-
-.cardContent p {
+  color: var(--color-text);
   margin: 0;
-  color: #4a5568;
-  line-height: 1.6;
+}
+
+.cardDescription {
   font-size: 0.875rem;
-}
-
-.cardMenu {
-  position: relative;
-}
-
-.cardMenuBtn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  color: #4a5568;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-}
-
-.cardMenuBtn:hover {
-  background: #f7fafc;
-  color: #2d3748;
-}
-
-.cardMenuDropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem;
-  z-index: 10;
-  min-width: 120px;
-  border: 1px solid #e2e8f0;
-}
-
-.cardMenuDropdown button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.5rem;
-  border: none;
-  background: none;
-  color: #4a5568;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-radius: 0.25rem;
-}
-
-.cardMenuDropdown button:hover {
-  background: #f7fafc;
-  color: #2d3748;
+  color: var(--color-text-secondary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .cardStats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem 0;
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  margin-bottom: 1rem;
 }
 
-.cardStat {
+.statItem {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  color: #4a5568;
+  gap: 0.5rem;
   font-size: 0.875rem;
+  color: var(--color-text-secondary);
 }
 
-.cardStat svg {
-  color: #6366f1;
-  width: 1rem;
-  height: 1rem;
+.statItem svg {
+  color: var(--color-primary);
 }
 
-.cardProgress {
-  margin-bottom: 1.5rem;
-}
-
-.cardProgressBar {
-  height: 0.5rem;
-  background: #e2e8f0;
-  border-radius: 0.25rem;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.cardProgressFill {
-  height: 100%;
-  background: #6366f1;
-  border-radius: 0.25rem;
-  transition: width 0.3s ease;
-}
-
-.cardProgressText {
-  font-size: 0.75rem;
-  color: #4a5568;
+.cardFooter {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
 }
 
 .cardActions {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
   align-items: center;
+  gap: 1rem;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.donateButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+  justify-content: center;
+  background-color: #E55B4D;
+  color: white;
+}
+
+.donateButton:hover {
+  background-color: #d44c3e;
+}
+
+.donateButton svg {
+  width: 16px;
+  height: 16px;
 }
 
 .supportButton {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.375rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  background-color: #6366f1;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.supportButton:hover {
-  background-color: #4f46e5;
-  transform: translateY(-1px);
+  min-width: 120px;
+  justify-content: center;
 }
 
 .statusText {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
   font-size: 0.875rem;
-  font-weight: 500;
-  background: #f7fafc;
-  color: #4a5568;
+  color: var(--color-text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background: var(--color-background-hover);
 }
 
-.statusText.approved {
-  background-color: #f0fff4;
-  color: #2f855a;
+.statusIcon {
+  width: 16px;
+  height: 16px;
 }
 
-.statusText.approved .statusIcon {
-  color: #38a169;
+.approved {
+  color: var(--color-success);
+  background: var(--color-success-light);
 }
 
-.statusText.refused {
-  background-color: #fff5f5;
-  color: #c53030;
+.refused {
+  color: var(--color-error);
+  background: var(--color-error-light);
 }
 
-.statusText.refused .statusIcon {
-  color: #e53e3e;
+.processing {
+  color: var(--color-info);
+  background: var(--color-info-light);
 }
 
-.statusText.processing {
-  background-color: #ebf8ff;
-  color: #2b6cb0;
+/* Donation Modal Styles */
+.donationOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
-.statusText.processing .statusIcon {
-  color: #4299e1;
-  animation: spin 2s linear infinite;
+.donationModal {
+  background: var(--color-background-secondary);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
 }
 
-@keyframes spin {
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: var(--color-text-secondary);
+  transition: color 0.2s;
+  border-radius: 50%;
+}
+
+.closeButton:hover {
+  color: var(--color-text);
+  background-color: var(--color-background-hover);
+}
+
+.donationHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.donationHeader svg {
+  color: var(--color-error);
+  margin-bottom: 1rem;
+}
+
+.donationHeader h2 {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin: 0 0 0.5rem 0;
+}
+
+.donationHeader p {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+@keyframes modalSlideIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .cardStats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cardActions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .donateButton {
+    width: 100%;
+  }
+
+  .donationModal {
+    margin: 1rem;
+    padding: 1.5rem;
   }
 } 

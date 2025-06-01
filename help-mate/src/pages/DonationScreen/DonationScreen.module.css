@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,109 +13,90 @@
 }
 
 .donationModal {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-xl);
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  padding: 2rem;
   width: 100%;
   max-width: 500px;
   position: relative;
-  box-shadow: var(--shadow-2xl);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   max-height: 90vh;
   overflow-y: auto;
-  animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  z-index: 1001;
 }
 
 .closeButton {
   position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
+  top: 1rem;
+  right: 1rem;
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--spacing-sm);
-  color: var(--gray-500);
-  transition: color var(--transition-fast);
+  padding: 0.5rem;
+  color: #666;
+  transition: color 0.2s;
   border-radius: 50%;
 }
 
 .closeButton:hover {
-  color: var(--gray-700);
-  background-color: var(--gray-100);
+  color: #333;
+  background-color: #f5f5f5;
 }
 
 .donationHeader {
   text-align: center;
-  margin-bottom: var(--spacing-xl);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.donationHeader svg {
-  color: var(--primary-600);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 2rem;
 }
 
 .donationHeader h2 {
-  color: var(--gray-900);
-  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0 0 1rem 0;
 }
 
 .donationHeader p {
-  color: var(--gray-600);
+  color: #666;
   margin: 0;
 }
 
 .donationForm {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: 1.5rem;
 }
 
 .amountSection {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 1rem;
 }
 
 .predefinedAmounts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-md);
+  gap: 0.5rem;
 }
 
 .amountButton {
-  padding: var(--spacing-lg);
-  border: 2px solid var(--gray-200);
-  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   background: white;
+  color: #333;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 600;
-  color: var(--gray-700);
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
 }
 
 .amountButton:hover {
-  border-color: var(--primary-600);
-  color: var(--primary-600);
+  border-color: #E55B4D;
+  color: #E55B4D;
 }
 
 .amountButton.selected {
-  background: var(--primary-600);
+  background: #E55B4D;
   color: white;
-  border-color: var(--primary-600);
+  border-color: #E55B4D;
 }
 
 .customAmount {
@@ -124,96 +105,90 @@
 
 .customAmountInput {
   width: 100%;
-  padding: var(--spacing-lg);
-  border: 2px solid var(--gray-200);
-  border-radius: 12px;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-size: 1rem;
-  color: var(--gray-900);
-  transition: border-color var(--transition-fast);
+  outline: none;
+  transition: border-color 0.2s;
 }
 
 .customAmountInput:focus {
-  border-color: var(--primary-600);
-  outline: none;
-}
-
-.customAmountInput::placeholder {
-  color: var(--gray-400);
+  border-color: #E55B4D;
 }
 
 .cardSection {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 1rem;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 0.5rem;
 }
 
 .inputGroup label {
   font-size: 0.875rem;
+  color: #666;
   font-weight: 500;
-  color: var(--gray-700);
 }
 
 .inputGroup input {
-  padding: var(--spacing-md);
-  border: 2px solid var(--gray-200);
-  border-radius: 8px;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-size: 1rem;
-  color: var(--gray-900);
-  transition: border-color var(--transition-fast);
+  outline: none;
+  transition: border-color 0.2s;
+  background: white;
 }
 
 .inputGroup input:focus {
-  border-color: var(--primary-600);
-  outline: none;
-}
-
-.inputGroup input::placeholder {
-  color: var(--gray-400);
-}
-
-.errorText {
-  color: var(--error-600);
-  font-size: 0.75rem;
-  margin-top: -4px;
+  border-color: #E55B4D;
 }
 
 .cardDetails {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: var(--spacing-md);
+  gap: 1rem;
 }
 
 .submitButton {
-  background: var(--primary-600);
+  background: #E55B4D;
   color: white;
-  padding: var(--spacing-lg);
   border: none;
-  border-radius: 12px;
-  font-weight: 600;
+  border-radius: 6px;
+  padding: 1rem;
+  font-weight: 500;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color var(--transition-fast);
+  transition: background-color 0.2s;
+  margin-top: 1rem;
 }
 
 .submitButton:hover {
-  background: var(--primary-700);
+  background: #d44c3e;
 }
 
 .submitButton:disabled {
-  background: var(--gray-300);
+  background: #ccc;
   cursor: not-allowed;
+}
+
+.errorText {
+  color: #E55B4D;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
 }
 
 @media (max-width: 640px) {
   .donationModal {
-    padding: var(--spacing-lg);
-    border-radius: 12px;
+    margin: 1rem;
+    padding: 1.5rem;
+    max-height: calc(100vh - 2rem);
   }
 
   .predefinedAmounts {

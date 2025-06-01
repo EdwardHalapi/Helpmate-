@@ -1,24 +1,46 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Clock, X } from 'lucide-react';
+import { Check, Clock, X, Heart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import { toast } from 'react-hot-toast';
 import styles from './ProjectCard.module.css';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiUsers, FiCalendar, FiMapPin } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiMapPin, FiShare2 } from 'react-icons/fi';
+import DonationScreen from '../../pages/DonationScreen/DonationScreen';
 
-const ProjectCard = ({ project, onProjectUpdate, onEdit, onDelete }) => {
+const ProjectCard = ({ project, onProjectUpdate }) => {
   const navigate = useNavigate();
-  const { user, profileStatus, isOrganizer } = useAuth();
+  const { user, profileStatus } = useAuth();
   const [applicationStatus, setApplicationStatus] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-  const [showMenu, setShowMenu] = useState(false);
+  const [isOrganizer, setIsOrganizer] = React.useState(false);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  
+  React.useEffect(() => {
+    const checkRole = async () => {
+      if (!user) {
+        setIsOrganizer(false);
+        return;
+      }
 
-  // Check all three lists every time the component mounts or user/project changes
+      try {
+        const organizerRef = doc(db, 'organizations', user.uid);
+        const organizerDoc = await getDoc(organizerRef);
+        setIsOrganizer(organizerDoc.exists());
+      } catch (error) {
+        console.error('Error checking organizer status:', error);
+        setIsOrganizer(false);
+      }
+    };
+
+    checkRole();
+  }, [user]);
+
+  // Check application status
   React.useEffect(() => {
     const checkAllStatuses = async () => {
-      if (!user) {
+      if (!user || isOrganizer) {
         setApplicationStatus(null);
         return;
       }
@@ -30,7 +52,6 @@ const ProjectCard = ({ project, onProjectUpdate, onEdit, onDelete }) => {
         if (volunteerDoc.exists()) {
           const data = volunteerDoc.data();
           
-          // Check all three lists in priority order
           if (data.approved?.includes(project.id)) {
             setApplicationStatus('approved');
           } else if (data.pending?.includes(project.id)) {
@@ -47,33 +68,19 @@ const ProjectCard = ({ project, onProjectUpdate, onEdit, onDelete }) => {
     };
 
     checkAllStatuses();
-  }, [user, project.id]);
+  }, [user, project.id, isOrganizer]);
 
-  const handleCardClick = (e) => {
-    if (e.target.closest(`.${styles.cardMenuBtn}`)) return;
-    navigate(`/project/${project.id}`);
+  const handleCardClick = () => {
+    navigate(`/proiecte/${project.id}`);
   };
 
-  const handleMenuClick = (e) => {
+  const handleDonateClick = (e) => {
     e.stopPropagation();
-    setShowMenu(!showMenu);
-  };
-
-  const handleEditClick = (e) => {
-    e.stopPropagation();
-    setShowMenu(false);
-    onEdit(project);
-  };
-
-  const handleDeleteClick = (e) => {
-    e.stopPropagation();
-    setShowMenu(false);
-    onDelete(project);
-  };
-
-  const formatDate = (date) => {
-    if (!date) return 'Not set';
-    return new Date(date).toLocaleDateString();
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    setShowDonationModal(true);
   };
 
   const handleSupport = async (e) => {
@@ -114,31 +121,36 @@ const ProjectCard = ({ project, onProjectUpdate, onEdit, onDelete }) => {
     }
   };
 
+  const formatDate = (date) => {
+    if (!date) return 'Not set';
+    return new Date(date).toLocaleDateString();
+  };
+
   const renderApplicationStatus = () => {
+    // Don't show application status for organizers
     if (isOrganizer) {
       return null;
     }
 
-    // If there's an application status, show it as text
     switch (applicationStatus) {
       case 'pending':
         return (
           <div className={styles.statusText}>
-            <Clock size={16} className={styles.statusIcon} />
+            <Clock size={16} />
             <span>În așteptarea aprobării</span>
           </div>
         );
       case 'approved':
         return (
           <div className={`${styles.statusText} ${styles.approved}`}>
-            <Check size={16} className={styles.statusIcon} />
+            <Check size={16} />
             <span>Aplicare aprobată</span>
           </div>
         );
       case 'refused':
         return (
           <div className={`${styles.statusText} ${styles.refused}`}>
-            <X size={16} className={styles.statusIcon} />
+            <X size={16} />
             <span>Aplicare respinsă</span>
           </div>
         );
@@ -146,80 +158,69 @@ const ProjectCard = ({ project, onProjectUpdate, onEdit, onDelete }) => {
         if (loading) {
           return (
             <div className={`${styles.statusText} ${styles.processing}`}>
-              <Clock size={16} className={styles.statusIcon} />
+              <Clock size={16} />
               <span>Se procesează...</span>
             </div>
           );
         }
-        // Only show button if there's no status
+        // Only show button if there's no status and user is not an organizer
         return (
           <button 
             onClick={handleSupport}
             className={`btn btn-primary ${styles.supportButton}`}
           >
             <Check size={16} />
-            Susține
+            <span>Susține</span>
           </button>
         );
     }
   };
 
   return (
-    <div className={styles.card} onClick={handleCardClick}>
-      <div className={styles.cardContent}>
-        <div className={styles.cardHeader}>
-          <h3>{project.title}</h3>
-          {isOrganizer && (
-            <div className={styles.cardMenu}>
-              <button className={styles.cardMenuBtn} onClick={handleMenuClick}>
-                <FiMoreVertical />
-              </button>
-              {showMenu && (
-                <div className={styles.cardMenuDropdown}>
-                  <button onClick={handleEditClick}>
-                    <FiEdit2 /> Edit
-                  </button>
-                  <button onClick={handleDeleteClick}>
-                    <FiTrash2 /> Delete
-                  </button>
-                </div>
-              )}
+    <>
+      <div className={styles.card} onClick={handleCardClick}>
+        <div className={styles.cardContent}>
+          <h3 className={styles.cardTitle}>{project.title}</h3>
+          <p className={styles.cardDescription}>{project.description}</p>
+          
+          <div className={styles.cardStats}>
+            <div className={styles.statItem}>
+              <FiUsers />
+              <span>{project.currentVolunteers}/{project.maxVolunteers} volunteers</span>
             </div>
-          )}
+            <div className={styles.statItem}>
+              <FiCalendar />
+              <span>{formatDate(project.startDate)} - {formatDate(project.endDate)}</span>
+            </div>
+            <div className={styles.statItem}>
+              <FiMapPin />
+              <span>{project.location}</span>
+            </div>
+          </div>
+
+          <div className={styles.cardFooter}>
+            <div className={styles.cardActions}>
+              {!isOrganizer && renderApplicationStatus()}
+              <button 
+                className={styles.donateButton}
+                onClick={handleDonateClick}
+              >
+                <Heart size={16} />
+                <span>Donează</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <p>{project.description}</p>
       </div>
-      <div className={styles.cardStats}>
-        <div className={styles.cardStat}>
-          <FiUsers />
-          <span>{project.currentVolunteers}/{project.maxVolunteers} volunteers</span>
+
+      {showDonationModal && (
+        <div className={styles.donationOverlay} onClick={() => setShowDonationModal(false)}>
+          <div className={styles.donationModal} onClick={e => e.stopPropagation()}>
+            <DonationScreen project={project} onClose={() => setShowDonationModal(false)} />
+          </div>
         </div>
-        <div className={styles.cardStat}>
-          <FiCalendar />
-          <span>{formatDate(project.startDate)} - {formatDate(project.endDate)}</span>
-        </div>
-        <div className={styles.cardStat}>
-          <FiMapPin />
-          <span>{project.location}</span>
-        </div>
-      </div>
-      <div className={styles.cardProgress}>
-        <div className={styles.cardProgressBar}>
-          <div 
-            className={styles.cardProgressFill}
-            style={{ 
-              width: `${project.totalTasks ? (project.completedTasks / project.totalTasks) * 100 : 0}%` 
-            }}
-          />
-        </div>
-        <span className={styles.cardProgressText}>
-          {project.completedTasks}/{project.totalTasks} tasks completed
-        </span>
-      </div>
-      <div className={styles.cardActions}>
-        {renderApplicationStatus()}
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 

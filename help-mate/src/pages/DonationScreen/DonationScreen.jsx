@@ -6,7 +6,7 @@ import { db } from '../../services/firebase/config';
 import projectsService from '../../services/api/projects.js';
 import styles from './DonationScreen.module.css';
 
-const DonationScreen = () => {
+const DonationScreen = ({ project: projectProp, onClose }) => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState(null);
@@ -18,13 +18,19 @@ const DonationScreen = () => {
     cvv: ''
   });
   const [showSuccess, setShowSuccess] = useState(false);
-  const [project, setProject] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [project, setProject] = useState(projectProp || null);
+  const [loading, setLoading] = useState(!projectProp);
   const [error, setError] = useState(null);
   const [dateError, setDateError] = useState('');
 
   useEffect(() => {
     const fetchProject = async () => {
+      if (projectProp) {
+        setProject(projectProp);
+        setLoading(false);
+        return;
+      }
+
       if (!projectId) {
         console.error('Missing projectId:', projectId);
         setError('ID-ul proiectului lipsește');
@@ -52,9 +58,11 @@ const DonationScreen = () => {
       }
     };
 
-    setLoading(true);
-    fetchProject();
-  }, [projectId]);
+    if (!projectProp && projectId) {
+      setLoading(true);
+      fetchProject();
+    }
+  }, [projectId, projectProp]);
 
   const predefinedAmounts = [
     { value: 5, label: '5 LEI' },
@@ -119,7 +127,7 @@ const DonationScreen = () => {
       }
 
       // Get current project data
-      const currentProject = await projectsService.getProjectById(projectId);
+      const currentProject = projectProp || await projectsService.getProjectById(projectId);
       if (!currentProject) {
         throw new Error('Proiectul nu a fost găsit');
       }
@@ -137,18 +145,22 @@ const DonationScreen = () => {
       const newTotal = currentTotal + amount;
 
       // Update the project with the new donation
-      await projectsService.updateProject(projectId, {
+      await projectsService.updateProject(currentProject.id, {
         donations: updatedDonations,
         totalDonations: newTotal,
         lastDonationAt: new Date().toISOString()
       });
 
       // Fetch the updated project to confirm changes
-      const updatedProject = await projectsService.getProjectById(projectId);
+      const updatedProject = await projectsService.getProjectById(currentProject.id);
       setProject(updatedProject);
       setShowSuccess(true);
       setTimeout(() => {
-        navigate(-1);
+        if (onClose) {
+          onClose();
+        } else {
+          navigate(-1);
+        }
       }, 2000);
 
     } catch (error) {
@@ -158,7 +170,11 @@ const DonationScreen = () => {
   };
 
   const handleClose = () => {
-    navigate(-1);
+    if (onClose) {
+      onClose();
+    } else {
+      navigate(-1);
+    }
   };
 
   const handleOverlayClick = (e) => {
@@ -168,83 +184,67 @@ const DonationScreen = () => {
   };
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
+    if (!onClose) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [onClose]);
 
   if (error) {
     return (
-      <div className={styles.donationOverlay} onClick={handleOverlayClick}>
-        <div className={styles.donationModal}>
-          <div className={styles.errorScreen}>
-            <h2>Oops! A apărut o eroare</h2>
-            <p>{error}</p>
-            <button 
-              className={`${styles.navButton} ${styles.homeButton}`} 
-              onClick={handleClose}
-            >
-              Înapoi
-            </button>
-          </div>
-        </div>
+      <div className={styles.errorScreen}>
+        <h2>Oops! A apărut o eroare</h2>
+        <p>{error}</p>
+        <button 
+          className={`${styles.navButton} ${styles.homeButton}`} 
+          onClick={handleClose}
+        >
+          Înapoi
+        </button>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className={styles.donationOverlay} onClick={handleOverlayClick}>
-        <div className={styles.donationModal}>
-          <div className={styles.loadingScreen}>
-            <div className={styles.spinner}></div>
-            <p>Se încarcă...</p>
-          </div>
-        </div>
+      <div className={styles.loadingScreen}>
+        <div className={styles.spinner}></div>
+        <p>Se încarcă...</p>
       </div>
     );
   }
 
   if (showSuccess) {
     return (
-      <div className={styles.donationOverlay} onClick={handleOverlayClick}>
-        <div className={styles.donationModal}>
-          <div className={styles.successScreen}>
-            <CheckCircle size={64} className={styles.successIcon} />
-            <h2>Mulțumim pentru donație!</h2>
-            <p>Ați donat cu succes {selectedAmount || customAmount} LEI{project ? ` pentru proiectul "${project.title}"` : ''}</p>
-            <button 
-              className={`${styles.navButton} ${styles.homeButton}`} 
-              onClick={handleClose}
-            >
-              OK
-            </button>
-          </div>
-        </div>
+      <div className={styles.successScreen}>
+        <CheckCircle size={64} className={styles.successIcon} />
+        <h2>Mulțumim pentru donație!</h2>
+        <p>Ați donat cu succes {selectedAmount || customAmount} LEI{project ? ` pentru proiectul "${project.title}"` : ''}</p>
+        <button 
+          className={`${styles.navButton} ${styles.homeButton}`} 
+          onClick={handleClose}
+        >
+          OK
+        </button>
       </div>
     );
   }
 
   return (
-    <div className={styles.donationOverlay} onClick={handleOverlayClick}>
+    <div className={styles.donationOverlay} onClick={onClose}>
       <div className={styles.donationModal} onClick={e => e.stopPropagation()}>
-        <button className={styles.closeButton} onClick={handleClose}>
+        <button className={styles.closeButton} onClick={onClose}>
           <X size={24} />
         </button>
 
         <div className={styles.donationHeader}>
-          <CreditCard size={32} />
-          <h2>Donează pentru {project ? `proiectul "${project.title}"` : 'acest proiect'}</h2>
+          <h2>Donează pentru proiectul "{project?.title || 'Campanie Adopție Animale'}"</h2>
           <p>Alege suma pe care dorești să o donezi</p>
         </div>
 
-        <form 
-          onSubmit={handleSubmit} 
-          className={styles.donationForm} 
-          method="post"
-          autoComplete="off"
-        >
+        <form onSubmit={handleSubmit} className={styles.donationForm}>
           {/* Hidden input to prevent autofill */}
           <input type="text" style={{ display: 'none' }} name="prevent_autofill" />
           
@@ -282,7 +282,7 @@ const DonationScreen = () => {
               <input
                 type="text"
                 id="cardNumber"
-                name="cc_number"
+                name="cardNumber"
                 placeholder="1234 5678 9012 3456"
                 value={cardData.cardNumber}
                 onChange={handleCardDataChange}
@@ -299,7 +299,7 @@ const DonationScreen = () => {
               <input
                 type="text"
                 id="cardHolder"
-                name="cc_name"
+                name="cardHolder"
                 placeholder="NUME PRENUME"
                 value={cardData.cardHolder}
                 onChange={handleCardDataChange}
@@ -316,7 +316,7 @@ const DonationScreen = () => {
                 <input
                   type="text"
                   id="expiryDate"
-                  name="cc_exp"
+                  name="expiryDate"
                   placeholder="MM/YY"
                   value={cardData.expiryDate}
                   onChange={handleCardDataChange}
@@ -334,7 +334,7 @@ const DonationScreen = () => {
                 <input
                   type="text"
                   id="cvv"
-                  name="cc_csc"
+                  name="cvv"
                   placeholder="123"
                   value={cardData.cvv}
                   onChange={handleCardDataChange}

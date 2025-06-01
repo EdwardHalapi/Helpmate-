@@ -49,39 +49,46 @@ const ProjectDetailsScreen = () => {
   const [applicationStatus, setApplicationStatus] = useState(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isOrganizer, setIsOrganizer] = useState(false);
 
   useEffect(() => {
-    const loadProject = async () => {
+    const fetchProjectDetails = async () => {
+      if (!id) {
+        setError('ID-ul proiectului lipsește');
+        return;
+      }
+
       try {
         setLoading(true);
-        // Subscribe to real-time updates
-        const unsubscribe = onSnapshot(doc(db, 'projects', id), (doc) => {
-          if (doc.exists()) {
-            const projectData = new Project({ id: doc.id, ...doc.data() });
-            setProject(projectData);
-            
-            // Check application status if user is logged in
-            if (user) {
-              const application = projectData.pendingVolunteers?.find(
-                (v) => v.volunteerId === user.uid
-              );
-              setApplicationStatus(application?.status || null);
-            }
+        const projectData = await projectsService.getProjectById(id);
+
+        if (projectData) {
+          setProject(projectData);
+
+          if (user) {
+            // Check application status
+            const application = projectData.applications?.find(
+              (app) => app.userId === user.uid
+            );
+            setApplicationStatus(application?.status || null);
+
+            // Check if user is an organizer
+            const organizerRef = doc(db, 'organizers', user.uid);
+            const organizerDoc = await getDoc(organizerRef);
+            setIsOrganizer(organizerDoc.exists());
           } else {
             setError('Proiectul nu a fost găsit');
           }
-          setLoading(false);
-        });
-
-        return () => unsubscribe();
+        }
       } catch (error) {
-        console.error('Error loading project:', error);
-        setError('A apărut o eroare la încărcarea proiectului');
+        console.error('Error fetching project:', error);
+        setError('Eroare la încărcarea proiectului');
+      } finally {
         setLoading(false);
       }
     };
 
-    loadProject();
+    fetchProjectDetails();
   }, [id, user]);
 
   const getStatusBadgeClass = (status) => {
@@ -359,7 +366,7 @@ const ProjectDetailsScreen = () => {
       <div className={styles.actionSection}>
         <div className={styles.container}>
           <div className={styles.actionButtons}>
-            {project?.status !== 'Finalizat' && project?.progress < 100 && (
+            {!isOrganizer && project?.status !== 'Finalizat' && project?.progress < 100 && (
               <>
                 {showSuccessMessage ? (
                   <div className={styles.successMessage}>

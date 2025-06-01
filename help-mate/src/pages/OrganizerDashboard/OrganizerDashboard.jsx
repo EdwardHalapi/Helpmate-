@@ -11,7 +11,7 @@ import projectsService from "../../services/api/projects";
 import { tasksService } from "../../services/api/tasks.js";
 import { volunteerService } from "../../services/api/volunteers";
 import Header from "../../components/layout/Header/Header.jsx";
-import ProjectCard from "../../components/ProjectCard/ProjectCard";
+import OrganizerProjectCard from "../../components/OrganizerProjectCard/OrganizerProjectCard";
 import { toast } from "react-hot-toast";
 import {
   Plus,
@@ -645,17 +645,13 @@ const OrganizerDashboard = () => {
 
           <div className="projects-grid">
             {filteredProjects.map(project => (
-              <ProjectCard
+              <OrganizerProjectCard
                 key={project.id}
                 project={project}
-                onDelete={() => handleDeleteProject(project.id)}
+                onDelete={handleDeleteProject}
                 onEdit={() => {
                   setSelectedProject(project);
                   setShowProjectForm(true);
-                }}
-                onAddTask={() => {
-                  setSelectedProject(project);
-                  setShowTaskForm(true);
                 }}
               />
             ))}
