@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { FiPlus, FiUser, FiCalendar, FiClock } from 'react-icons/fi';
-import ProjectsService from '../../services/api/projects';
+import projectsService from '../../services/api/projects';
 import './ProjectDashboard.css';
 
 const TASK_STATUS = {
@@ -16,10 +16,10 @@ const ProjectDashboard = () => {
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState({
-    [TASK_STATUS.TODO]: [],
-    [TASK_STATUS.IN_PROGRESS]: [],
-    [TASK_STATUS.REVIEW]: [],
-    [TASK_STATUS.DONE]: []
+    'To Do': [],
+    'In Progress': [],
+    'Review': [],
+    'Done': []
   });
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [newTask, setNewTask] = useState({
@@ -36,15 +36,15 @@ const ProjectDashboard = () => {
 
   const loadProject = async () => {
     try {
-      const projectData = await ProjectsService.getProjectById(projectId);
+      const projectData = await projectsService.getProjectById(projectId);
       setProject(projectData);
       
       // Organize tasks by status
       const organizedTasks = {
-        [TASK_STATUS.TODO]: [],
-        [TASK_STATUS.IN_PROGRESS]: [],
-        [TASK_STATUS.REVIEW]: [],
-        [TASK_STATUS.DONE]: []
+        'To Do': [],
+        'In Progress': [],
+        'Review': [],
+        'Done': []
       };
       
       projectData.tasks?.forEach(task => {
@@ -106,9 +106,9 @@ const ProjectDashboard = () => {
             )
         ];
 
-        await ProjectsService.updateProject(projectId, {
+        await projectsService.updateProject(projectId, {
           tasks: updatedTasks,
-          completedTasks: updatedTasks.filter(t => t.status === TASK_STATUS.DONE).length,
+          completedTasks: updatedTasks.filter(t => t.status === 'Done').length,
           totalTasks: updatedTasks.length
         });
       } catch (error) {
@@ -124,22 +124,22 @@ const ProjectDashboard = () => {
       const newTaskData = {
         ...newTask,
         id: Date.now().toString(),
-        status: TASK_STATUS.TODO,
+        status: 'To Do',
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
       const updatedTasks = {
         ...tasks,
-        [TASK_STATUS.TODO]: [...tasks[TASK_STATUS.TODO], newTaskData]
+        'To Do': [...tasks['To Do'], newTaskData]
       };
 
       const allTasks = Object.values(updatedTasks).flat();
 
-      await ProjectsService.updateProject(projectId, {
+      await projectsService.updateProject(projectId, {
         tasks: allTasks,
         totalTasks: allTasks.length,
-        completedTasks: allTasks.filter(t => t.status === TASK_STATUS.DONE).length
+        completedTasks: allTasks.filter(t => t.status === 'Done').length
       });
 
       setTasks(updatedTasks);
@@ -187,7 +187,7 @@ const ProjectDashboard = () => {
             <FiCalendar />
           </div>
           <div className="stat-info">
-            <h3>{tasks[TASK_STATUS.DONE].length}/{Object.values(tasks).flat().length}</h3>
+            <h3>{tasks['Done'].length}/{Object.values(tasks).flat().length}</h3>
             <p>Tasks Completed</p>
           </div>
         </div>
@@ -195,22 +195,22 @@ const ProjectDashboard = () => {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="project-dashboard__board">
-          {Object.keys(tasks).map(status => (
+          {Object.entries(tasks).map(([status, columnTasks]) => (
             <div key={status} className="board-column">
               <h2 className="board-column__title">
                 {status}
                 <span className="board-column__count">
-                  {tasks[status].length}
+                  {columnTasks.length}
                 </span>
               </h2>
-              <Droppable droppableId={status}>
+              <Droppable droppableId={status} key={status}>
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className="board-column__content"
                   >
-                    {tasks[status].map((task, index) => (
+                    {columnTasks.map((task, index) => (
                       <Draggable
                         key={task.id}
                         draggableId={task.id}
