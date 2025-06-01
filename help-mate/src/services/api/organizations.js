@@ -3,7 +3,7 @@ import {
   doc,
   getDocs,
   getDoc,
-  addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -23,11 +23,10 @@ class OrganizationsService {
 
   async getByOrganizerId(organizerId) {
     try {
-      const q = query(this.collection, where("organizerId", "==", organizerId));
-      const querySnapshot = await getDocs(q);
-      const doc = querySnapshot.docs[0];
-      if (doc) {
-        return new Organization({ id: doc.id, ...doc.data() });
+      const docRef = doc(this.collection, organizerId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return new Organization({ id: docSnap.id, ...docSnap.data() });
       }
       return null;
     } catch (error) {
@@ -38,6 +37,11 @@ class OrganizationsService {
 
   async create(organizationData) {
     try {
+      const { organizerId } = organizationData;
+      if (!organizerId) {
+        throw new Error("organizerId is required");
+      }
+
       const dataToSave = {
         ...organizationData,
         createdAt: serverTimestamp(),
@@ -47,8 +51,9 @@ class OrganizationsService {
         totalHours: 0
       };
 
-      const docRef = await addDoc(this.collection, dataToSave);
-      return docRef.id;
+      const docRef = doc(this.collection, organizerId);
+      await setDoc(docRef, dataToSave);
+      return organizerId;
     } catch (error) {
       console.error("Error creating organization:", error);
       throw error;

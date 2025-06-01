@@ -375,7 +375,7 @@ const OrganizerDashboard = () => {
         const org = await organizationsService.getByOrganizerId(authUser.uid);
         if (!org) {
           // Create organization if it doesn't exist
-          const orgId = await organizationsService.create({
+          await organizationsService.create({
             name: "My Organization",
             description: "Organization description",
             organizerId: authUser.uid,
@@ -420,7 +420,7 @@ const OrganizerDashboard = () => {
       const newProject = {
         title: projectData.title,
         description: projectData.description,
-        organizationId: organization?.id || null,
+        organizerId: authUser.uid,
         managerId: authUser.uid,
         status: projectData.status || "Planificat",
         priority: projectData.priority || "Medie",
@@ -439,8 +439,11 @@ const OrganizerDashboard = () => {
         updatedAt: new Date().toISOString()
       };
 
+      console.log('Creating project with data:', newProject);
+
       // Create project in Firestore
       const projectId = await projectsService.createProject(newProject);
+      console.log('Created project with ID:', projectId);
 
       // Update organization's projects count
       if (organization?.id) {
@@ -449,6 +452,7 @@ const OrganizerDashboard = () => {
       
       // Get the created project with its ID
       const createdProject = await projectsService.getProjectById(projectId);
+      console.log('Fetched created project:', createdProject);
       
       // Update local state
       setProjects(prevProjects => [createdProject, ...prevProjects]);

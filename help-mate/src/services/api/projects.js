@@ -23,7 +23,7 @@ const COLLECTION_NAME = "projects";
 const PROJECT_STRUCTURE = {
   title: "",
   description: "",
-  organizationId: null,
+  organizerId: null,
   managerId: null,
   status: "Planificat",
   priority: "Medie",
@@ -84,7 +84,10 @@ class ProjectsService {
         conditions.push(where("location", "==", filters.location));
       }
 
-      if (filters.organizationId) {
+      // Handle both organizerId and organizationId
+      if (filters.organizerId) {
+        conditions.push(where("organizerId", "==", filters.organizerId));
+      } else if (filters.organizationId) {
         conditions.push(where("organizationId", "==", filters.organizationId));
       }
 
@@ -165,7 +168,7 @@ class ProjectsService {
       const requiredFields = [
         "title",
         "description",
-        "organizationId",
+        "organizerId",
         "managerId",
         "location",
       ];
@@ -194,7 +197,7 @@ class ProjectsService {
       const projectId = projectRef.id;
 
       // Save to organization's projects subcollection
-      const orgProjectsRef = collection(db, 'organizations', projectData.organizationId, 'projects');
+      const orgProjectsRef = collection(db, 'organizations', projectData.organizerId, 'projects');
       await addDoc(orgProjectsRef, {
         ...projectToSave,
         projectId: projectId // Reference to main project document
@@ -231,7 +234,7 @@ class ProjectsService {
       });
 
       // Update in organization's projects subcollection
-      const orgProjectsRef = collection(db, 'organizations', projectData.organizationId, 'projects');
+      const orgProjectsRef = collection(db, 'organizations', projectData.organizerId, 'projects');
       const q = query(orgProjectsRef, where("projectId", "==", projectId));
       const querySnapshot = await getDocs(q);
       
@@ -270,7 +273,7 @@ class ProjectsService {
       await deleteDoc(projectRef);
 
       // Delete from organization's projects subcollection
-      const orgProjectsRef = collection(db, 'organizations', projectData.organizationId, 'projects');
+      const orgProjectsRef = collection(db, 'organizations', projectData.organizerId, 'projects');
       const q = query(orgProjectsRef, where("projectId", "==", projectId));
       const querySnapshot = await getDocs(q);
       
@@ -655,18 +658,39 @@ class ProjectsService {
     }
   }
 
-  async getProjectsByOrganizerId(organizationId) {
+  async getProjectsByOrganizerId(organizerId) {
     try {
-      const q = query(
+      console.log('Fetching projects for organizerId:', organizerId);
+      
+      // First try with organizerId
+      let q = query(
         this.projectsCollection,
-        where("organizationId", "==", organizationId),
+        where("organizerId", "==", organizerId),
         orderBy("createdAt", "desc")
       );
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
+      let querySnapshot = await getDocs(q);
+      let projects = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
+      // If no results, try with organizationId (for backward compatibility)
+      if (projects.length === 0) {
+        console.log('No projects found with organizerId, trying organizationId');
+        q = query(
+          this.projectsCollection,
+          where("organizationId", "==", organizerId),
+          orderBy("createdAt", "desc")
+        );
+        querySnapshot = await getDocs(q);
+        projects = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      }
+
+      console.log('Found projects:', projects);
+      return projects;
     } catch (error) {
       console.error("Error getting organization projects:", error);
       throw error;
