@@ -7,6 +7,8 @@ import VolunteerDashboard from '../pages/VolunteerDashboard/VolunteerDashboard';
 import VolunteerProfileForm from '../pages/VolunteerProfile/VolunteerProfileForm';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRoles } from '../services/firebase/auth';
+import OrganizerDashboard from '../pages/OrganizerDashboard/OrganizerDashboard';
+import ProjectDashboard from '../pages/ProjectDashboard/ProjectDashboard';
 
 // Placeholder component for pages in development
 const PlaceholderPage = ({ pageName }) => (
@@ -55,10 +57,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   // If trying to access dashboard pages and profile is incomplete, redirect to profile completion
   if (profileStatus === 'incomplete' && 
-      (window.location.pathname.includes('/dashboard') || 
-       window.location.pathname.includes('/aplicatii') ||
-       window.location.pathname.includes('/istoric') ||
-       window.location.pathname.includes('/certificare'))) {
+      window.location.pathname.includes('/dashboard')) {
     return <Navigate 
       to={user.role === UserRoles.VOLUNTEER ? '/profil/completeaza' : '/organizator/profil/completeaza'} 
       replace 
@@ -133,7 +132,7 @@ const AppRoutes = () => {
         path="/dashboard/organizator" 
         element={
           <ProtectedRoute requiredRole={UserRoles.ORGANIZER}>
-            <PlaceholderPage pageName="Tabloul de Bord Organizator" />
+            <OrganizerDashboard />
           </ProtectedRoute>
         } 
       />
@@ -168,6 +167,10 @@ const AppRoutes = () => {
             <PlaceholderPage pageName="Gestionare Voluntari" />
           </ProtectedRoute>
         } 
+      />
+      <Route 
+        path="/project/:projectId" 
+        element={<ProjectDashboard />} 
       />
 
       {/* Public routes */}

@@ -1,17 +1,19 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Clock, Check, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Check, Clock, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import { toast } from 'react-hot-toast';
 import styles from './ProjectCard.module.css';
+import { FiMoreVertical, FiEdit2, FiTrash2, FiUsers, FiCalendar, FiMapPin } from 'react-icons/fi';
 
-const ProjectCard = ({ project, onProjectUpdate }) => {
+const ProjectCard = ({ project, onProjectUpdate, onEdit, onDelete }) => {
   const navigate = useNavigate();
   const { user, profileStatus, isOrganizer } = useAuth();
   const [applicationStatus, setApplicationStatus] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Check all three lists every time the component mounts or user/project changes
   React.useEffect(() => {
@@ -47,82 +49,68 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
     checkAllStatuses();
   }, [user, project.id]);
 
-  const handleProjectApplication = async () => {
-    if (!user) {
-      navigate('/login', { state: { returnTo: `/proiecte/${project.id}` } });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const projectRef = doc(db, 'projects', project.id);
-      const projectDoc = await getDoc(projectRef);
-      
-      if (!projectDoc.exists()) {
-        throw new Error('Proiectul nu a fost găsit');
-      }
-
-      const projectData = projectDoc.data();
-
-      // Create volunteer application data
-      const volunteerData = {
-        volunteerId: user.uid,
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        status: 'Pending',
-        appliedAt: Timestamp.now()
-      };
-
-      // Update project with new application
-      const updatedPendingVolunteers = [
-        ...(projectData.pendingVolunteers || []),
-        volunteerData
-      ];
-
-      await updateDoc(projectRef, {
-        pendingVolunteers: updatedPendingVolunteers
-      });
-
-      // Update volunteer's pending projects
-      const volunteerRef = doc(db, 'volunteers', user.uid);
-      const volunteerDoc = await getDoc(volunteerRef);
-      const currentPending = volunteerDoc.exists() ? (volunteerDoc.data().pending || []) : [];
-      
-      await updateDoc(volunteerRef, {
-        pending: [...currentPending, project.id]
-      });
-
-      setApplicationStatus('pending');
-      toast.success('Aplicarea ta a fost înregistrată cu succes!');
-      
-      if (onProjectUpdate) {
-        onProjectUpdate();
-      }
-      
-    } catch (error) {
-      console.error('Error applying to project:', error);
-      toast.error('Nu s-a putut aplica la proiect. Te rugăm să încerci din nou.');
-    } finally {
-      setLoading(false);
-    }
+  const handleCardClick = (e) => {
+    if (e.target.closest(`.${styles.cardMenuBtn}`)) return;
+    navigate(`/project/${project.id}`);
   };
 
-  const handleSupport = () => {
+  const handleMenuClick = (e) => {
+    e.stopPropagation();
+    setShowMenu(!showMenu);
+  };
+
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    onEdit(project);
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    onDelete(project);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return 'Not set';
+    return new Date(date).toLocaleDateString();
+  };
+
+  const handleSupport = async (e) => {
+    e.stopPropagation();
     if (!user) {
-      navigate('/login', { state: { returnTo: `/proiecte/${project.id}` } });
+      toast.error('Please log in to support this project');
       return;
     }
 
-    if (profileStatus === 'incomplete') {
-      navigate('/profil/completeaza', {
-        state: {
-          projectId: project.id,
-          returnTo: `/proiecte/${project.id}`
+    if (profileStatus !== 'complete') {
+      toast.error('Please complete your profile before supporting projects');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const volunteerRef = doc(db, 'volunteers', user.uid);
+      const volunteerDoc = await getDoc(volunteerRef);
+      
+      if (volunteerDoc.exists()) {
+        const data = volunteerDoc.data();
+        const pending = data.pending || [];
+        
+        if (!pending.includes(project.id)) {
+          await updateDoc(volunteerRef, {
+            pending: [...pending, project.id]
+          });
+          setApplicationStatus('pending');
+          toast.success('Application submitted successfully!');
+          onProjectUpdate && onProjectUpdate();
         }
-      });
-    } else {
-      handleProjectApplication();
+      }
+    } catch (error) {
+      console.error('Error applying to project:', error);
+      toast.error('Failed to submit application');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,20 +165,58 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
   };
 
   return (
-    <div className={styles.card}>
+    <div className={styles.card} onClick={handleCardClick}>
       <div className={styles.cardContent}>
-        <h3>{project.title}</h3>
+        <div className={styles.cardHeader}>
+          <h3>{project.title}</h3>
+          {isOrganizer && (
+            <div className={styles.cardMenu}>
+              <button className={styles.cardMenuBtn} onClick={handleMenuClick}>
+                <FiMoreVertical />
+              </button>
+              {showMenu && (
+                <div className={styles.cardMenuDropdown}>
+                  <button onClick={handleEditClick}>
+                    <FiEdit2 /> Edit
+                  </button>
+                  <button onClick={handleDeleteClick}>
+                    <FiTrash2 /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <p>{project.description}</p>
       </div>
+      <div className={styles.cardStats}>
+        <div className={styles.cardStat}>
+          <FiUsers />
+          <span>{project.currentVolunteers}/{project.maxVolunteers} volunteers</span>
+        </div>
+        <div className={styles.cardStat}>
+          <FiCalendar />
+          <span>{formatDate(project.startDate)} - {formatDate(project.endDate)}</span>
+        </div>
+        <div className={styles.cardStat}>
+          <FiMapPin />
+          <span>{project.location}</span>
+        </div>
+      </div>
+      <div className={styles.cardProgress}>
+        <div className={styles.cardProgressBar}>
+          <div 
+            className={styles.cardProgressFill}
+            style={{ 
+              width: `${project.totalTasks ? (project.completedTasks / project.totalTasks) * 100 : 0}%` 
+            }}
+          />
+        </div>
+        <span className={styles.cardProgressText}>
+          {project.completedTasks}/{project.totalTasks} tasks completed
+        </span>
+      </div>
       <div className={styles.cardActions}>
-        <Link 
-          to={`/proiecte/${project.id}/donează`} 
-          className={`btn btn-error ${styles.donateButton}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Heart size={16} />
-          Donează
-        </Link>
         {renderApplicationStatus()}
       </div>
     </div>

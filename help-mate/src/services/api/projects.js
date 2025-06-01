@@ -42,7 +42,24 @@ const PROJECT_STRUCTURE = {
   tasks: [],
 };
 
+// Helper function to safely convert Firestore dates
+const convertFirestoreDate = (date) => {
+  if (!date) return null;
+  if (date instanceof Timestamp) return date.toDate();
+  if (date.seconds) return new Timestamp(date.seconds, date.nanoseconds).toDate();
+  if (date instanceof Date) return date;
+  try {
+    return new Date(date);
+  } catch (e) {
+    return null;
+  }
+};
+
 class ProjectsService {
+  constructor() {
+    this.projectsCollection = collection(db, COLLECTION_NAME);
+  }
+
   /**
    * Obține toate proiectele
    * @param {Object} filters - Filtre opționale pentru căutare
@@ -104,11 +121,10 @@ class ProjectsService {
           new Project({
             id: doc.id,
             ...data,
-            // Convertim timestamp-urile în Date objects
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-            startDate: data.startDate?.toDate() || null,
-            endDate: data.endDate?.toDate() || null,
+            createdAt: convertFirestoreDate(data.createdAt) || new Date(),
+            updatedAt: convertFirestoreDate(data.updatedAt) || new Date(),
+            startDate: convertFirestoreDate(data.startDate),
+            endDate: convertFirestoreDate(data.endDate),
           })
         );
       });
@@ -127,26 +143,13 @@ class ProjectsService {
    */
   async getProjectById(projectId) {
     try {
-      console.log("Getting project document for ID:", projectId);
-      const projectRef = doc(db, "projects", projectId);
-      const projectSnap = await getDoc(projectRef);
-
-      if (projectSnap.exists()) {
-        const data = projectSnap.data();
-        return new Project({
-          id: projectSnap.id,
-          ...data,
-          // Convert timestamps to Date objects
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-          startDate: data.startDate?.toDate() || null,
-          endDate: data.endDate?.toDate() || null,
-          lastDonationAt: data.lastDonationAt?.toDate() || null,
-        });
+      const projectDoc = await getDoc(doc(this.projectsCollection, projectId));
+      if (!projectDoc.exists()) {
+        throw new Error("Project not found");
       }
-      return null;
+      return { id: projectDoc.id, ...projectDoc.data() };
     } catch (error) {
-      console.error("Error in getProjectById:", error);
+      console.error("Error getting project:", error);
       throw error;
     }
   }
@@ -158,7 +161,7 @@ class ProjectsService {
    */
   async createProject(projectData) {
     try {
-      // Validăm datele obligatorii
+      // Validate required fields
       const requiredFields = [
         "title",
         "description",
@@ -166,53 +169,41 @@ class ProjectsService {
         "managerId",
         "location",
       ];
+      
       for (const field of requiredFields) {
         if (!projectData[field]) {
           throw new Error(`Câmpul ${field} este obligatoriu`);
         }
       }
 
-      // Pregătim datele pentru salvare
+      // Prepare project data
       const projectToSave = {
-        ...PROJECT_STRUCTURE,
         ...projectData,
-        coordinates: projectData.coordinates || { lat: null, lng: null },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        currentVolunteers: projectData.currentVolunteers || 0,
-        totalHours: projectData.totalHours || 0,
-        completedTasks: projectData.completedTasks || 0,
-        totalTasks: projectData.totalTasks || 0,
-        requiredSkills: projectData.requiredSkills || [],
+        currentVolunteers: 0,
+        totalHours: 0,
+        completedTasks: 0,
+        totalTasks: 0,
+        pendingVolunteers: [],
+        tasks: []
       };
 
-      // Eliminăm id-ul dacă există (Firestore îl generează automat)
-      delete projectToSave.id;
+      // Save to main projects collection
+      const projectRef = await addDoc(this.projectsCollection, projectToSave);
+      const projectId = projectRef.id;
 
-      // Convertim datele în format Firestore
-      if (projectData.startDate) {
-        projectToSave.startDate =
-          projectData.startDate instanceof Date
-            ? projectData.startDate
-            : new Date(projectData.startDate);
-      }
+      // Save to organization's projects subcollection
+      const orgProjectsRef = collection(db, 'organizations', projectData.organizationId, 'projects');
+      await addDoc(orgProjectsRef, {
+        ...projectToSave,
+        projectId: projectId // Reference to main project document
+      });
 
-      if (projectData.endDate) {
-        projectToSave.endDate =
-          projectData.endDate instanceof Date
-            ? projectData.endDate
-            : new Date(projectData.endDate);
-      }
-
-      const docRef = await addDoc(
-        collection(db, COLLECTION_NAME),
-        projectToSave
-      );
-
-      return docRef.id;
+      return projectId;
     } catch (error) {
-      console.error("Eroare la crearea proiectului:", error);
-      throw new Error("Nu s-a putut crea proiectul: " + error.message);
+      console.error("Error creating project:", error);
+      throw error;
     }
   }
 
@@ -224,75 +215,38 @@ class ProjectsService {
    */
   async updateProject(projectId, updateData) {
     try {
-      if (!projectId) {
-        throw new Error("ID-ul proiectului este necesar");
+      const projectRef = doc(this.projectsCollection, projectId);
+      const projectDoc = await getDoc(projectRef);
+      
+      if (!projectDoc.exists()) {
+        throw new Error("Project not found");
       }
 
-      // Adăugăm timestamp-ul de actualizare
-      const dataToUpdate = {
+      const projectData = projectDoc.data();
+      
+      // Update in main projects collection
+      await updateDoc(projectRef, {
         ...updateData,
-        updatedAt: serverTimestamp(),
-      };
+        updatedAt: serverTimestamp()
+      });
 
-      // Handle coordinates update
-      if (updateData.coordinates) {
-        dataToUpdate.coordinates = {
-          lat: updateData.coordinates.lat || null,
-          lng: updateData.coordinates.lng || null,
-        };
+      // Update in organization's projects subcollection
+      const orgProjectsRef = collection(db, 'organizations', projectData.organizationId, 'projects');
+      const q = query(orgProjectsRef, where("projectId", "==", projectId));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const orgProjectDoc = querySnapshot.docs[0];
+        await updateDoc(doc(orgProjectsRef, orgProjectDoc.id), {
+          ...updateData,
+          updatedAt: serverTimestamp()
+        });
       }
 
-      // Eliminăm id-ul din datele de update
-      delete dataToUpdate.id;
-
-      // Handle pendingVolunteers array
-      if (updateData.pendingVolunteers) {
-        dataToUpdate.pendingVolunteers = updateData.pendingVolunteers.map(volunteer => ({
-          ...volunteer,
-          appliedAt: volunteer.appliedAt instanceof Timestamp 
-            ? volunteer.appliedAt 
-            : Timestamp.now()
-        }));
-      }
-
-      // Convertim datele dacă este necesar
-      if (updateData.startDate) {
-        dataToUpdate.startDate = updateData.startDate instanceof Date
-          ? Timestamp.fromDate(updateData.startDate)
-          : Timestamp.fromDate(new Date(updateData.startDate));
-      }
-
-      if (updateData.endDate) {
-        dataToUpdate.endDate = updateData.endDate instanceof Date
-          ? Timestamp.fromDate(updateData.endDate)
-          : Timestamp.fromDate(new Date(updateData.endDate));
-      }
-
-      // Actualizăm progresul dacă au fost modificate task-urile
-      if (updateData.completedTasks !== undefined || updateData.totalTasks !== undefined) {
-        const currentProject = await this.getProjectById(projectId);
-        if (currentProject) {
-          const completedTasks = updateData.completedTasks !== undefined
-            ? updateData.completedTasks
-            : currentProject.completedTasks;
-          const totalTasks = updateData.totalTasks !== undefined
-            ? updateData.totalTasks
-            : currentProject.totalTasks;
-
-          // Actualizăm status-ul dacă proiectul e complet
-          if (totalTasks > 0 && completedTasks >= totalTasks && currentProject.status !== "Finalizat") {
-            dataToUpdate.status = "Finalizat";
-          }
-        }
-      }
-
-      const docRef = doc(db, COLLECTION_NAME, projectId);
-      await updateDoc(docRef, dataToUpdate);
-
-      return true;
+      return projectId;
     } catch (error) {
-      console.error("Eroare la actualizarea proiectului:", error);
-      throw new Error("Nu s-a putut actualiza proiectul: " + error.message);
+      console.error("Error updating project:", error);
+      throw error;
     }
   }
 
@@ -303,17 +257,32 @@ class ProjectsService {
    */
   async deleteProject(projectId) {
     try {
-      if (!projectId) {
-        throw new Error("ID-ul proiectului este necesar");
+      const projectRef = doc(this.projectsCollection, projectId);
+      const projectDoc = await getDoc(projectRef);
+      
+      if (!projectDoc.exists()) {
+        throw new Error("Project not found");
       }
 
-      const docRef = doc(db, COLLECTION_NAME, projectId);
-      await deleteDoc(docRef);
+      const projectData = projectDoc.data();
+      
+      // Delete from main projects collection
+      await deleteDoc(projectRef);
+
+      // Delete from organization's projects subcollection
+      const orgProjectsRef = collection(db, 'organizations', projectData.organizationId, 'projects');
+      const q = query(orgProjectsRef, where("projectId", "==", projectId));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const orgProjectDoc = querySnapshot.docs[0];
+        await deleteDoc(doc(orgProjectsRef, orgProjectDoc.id));
+      }
 
       return true;
     } catch (error) {
-      console.error("Eroare la ștergerea proiectului:", error);
-      throw new Error("Nu s-a putut șterge proiectul");
+      console.error("Error deleting project:", error);
+      throw error;
     }
   }
 
@@ -485,10 +454,10 @@ class ProjectsService {
               new Project({
                 id: doc.id,
                 ...data,
-                createdAt: data.createdAt?.toDate() || new Date(),
-                updatedAt: data.updatedAt?.toDate() || new Date(),
-                startDate: data.startDate?.toDate() || null,
-                endDate: data.endDate?.toDate() || null,
+                createdAt: convertFirestoreDate(data.createdAt) || new Date(),
+                updatedAt: convertFirestoreDate(data.updatedAt) || new Date(),
+                startDate: convertFirestoreDate(data.startDate),
+                endDate: convertFirestoreDate(data.endDate),
               })
             );
           });
@@ -685,9 +654,27 @@ class ProjectsService {
       throw new Error("Nu s-a putut anula proiectul");
     }
   }
+
+  async getProjectsByOrganizerId(organizationId) {
+    try {
+      const q = query(
+        this.projectsCollection,
+        where("organizationId", "==", organizationId),
+        orderBy("createdAt", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error("Error getting organization projects:", error);
+      throw error;
+    }
+  }
 }
 
-// Exportăm doar serviciul și structura, Project vine din models
+// Create and export a single instance
 const projectsService = new ProjectsService();
 export default projectsService;
 

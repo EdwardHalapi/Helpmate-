@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Search, Calendar, MapPin, Users, Star, Heart, User, Building2, ChevronRight, Filter, ArrowRight, CheckCircle } from 'lucide-react';
-import projectsService from '../../services/api/projects.js';
+import projectsService from '../../services/api/projects';
 import { Project } from '../../models/Project.js';
 import Header from '../../components/layout/Header/Header';
 import styles from './HomeScreen.module.css';
@@ -11,6 +11,7 @@ import { UserRoles } from '../../services/firebase/auth';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase/config';
 import { toast } from 'react-hot-toast';
+import ProjectCard from '../../components/ProjectCard/ProjectCard';
 
 const SCROLL_POSITION_KEY = 'homeScreenScrollPosition';
 
@@ -51,11 +52,13 @@ const HomeScreen = () => {
     const loadProjects = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const projectList = await projectsService.getAllProjects();
         setProjects(projectList);
         setFilteredProjects(projectList);
 
-        // Calculează statisticile
+        // Calculate statistics
         const newStats = {
           total: projectList.length,
           active: projectList.filter((p) => p.status === "Activ").length,
@@ -444,247 +447,6 @@ const HomeScreen = () => {
         redirectPath={redirectPath}
       />
     </div>
-  );
-};
-
-// Project Card Component
-const ProjectCard = ({ project }) => {
-  const navigate = useNavigate();
-  const { user, profileStatus } = useAuth();
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [applicationStatus, setApplicationStatus] = useState(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authRole, setAuthRole] = useState(null);
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case "Activ":
-        return "badge-success";
-      case "Planificat":
-        return "badge-warning";
-      case "Finalizat":
-        return "badge-info";
-      default:
-        return "badge-warning";
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "Ridicată":
-        return styles.priorityHigh;
-      case "Medie":
-        return styles.priorityMedium;
-      case "Scăzută":
-        return styles.priorityLow;
-      default:
-        return styles.priorityMedium;
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "Nu este stabilită";
-    return new Intl.DateTimeFormat("ro-RO", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
-  const handleDonateClick = (e) => {
-    e.preventDefault();
-    navigate(`/proiecte/${project.id}/donează`);
-  };
-
-  const handleApplyClick = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!user) {
-      setAuthRole(UserRoles.VOLUNTEER);
-      setShowAuthModal(true);
-      return;
-    }
-
-    // Check if profile is complete
-    if (profileStatus === 'incomplete') {
-      // Navigate to profile completion with project info
-      navigate('/profil/completeaza', {
-        state: {
-          projectId: project.id,
-          returnTo: `/proiecte/${project.id}`
-        }
-      });
-      return;
-    }
-
-    try {
-      // Check if user has already applied
-      const existingApplication = project.pendingVolunteers?.find(
-        (v) => v.volunteerId === user.uid
-      );
-
-      if (existingApplication) {
-        // Already applied, just show the success message
-        setShowSuccessMessage(true);
-        setApplicationStatus(existingApplication.status);
-        setTimeout(() => {
-          setShowSuccessMessage(false);
-        }, 3000);
-        return;
-      }
-
-      // Create volunteer application data
-      const volunteerData = {
-        volunteerId: user.uid,
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        status: 'Pending',
-        appliedAt: new Date().toISOString()
-      };
-
-      // Update project with new application
-      const updatedPendingVolunteers = [
-        ...(project.pendingVolunteers || []),
-        volunteerData
-      ];
-
-      await projectsService.updateProject(project.id, {
-        pendingVolunteers: updatedPendingVolunteers
-      });
-
-      // Update volunteer's pending projects
-      const volunteerRef = doc(db, 'volunteers', user.uid);
-      const volunteerDoc = await getDoc(volunteerRef);
-      
-      if (volunteerDoc.exists()) {
-        const volunteerData = volunteerDoc.data();
-        await updateDoc(volunteerRef, {
-          pending: [...(volunteerData.pending || []), project.id]
-        });
-      }
-
-      // Show success message and update status
-      setShowSuccessMessage(true);
-      setApplicationStatus('Pending');
-      
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error applying to project:', error);
-    }
-  };
-
-  return (
-    <>
-      <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
-        <div className={`card ${styles.projectCard}`}>
-          <div className="card-header">
-            <div className={styles.cardHeader}>
-              <div className={`badge ${getStatusBadgeClass(project.status)}`}>
-                {project.status}
-              </div>
-              <div className={`${styles.priority} ${getPriorityColor(project.priority)}`}>
-                {project.priority}
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-body">
-            <h4 className="text-h4">{project.title}</h4>
-            <p className="text-sm text-secondary" style={{ marginBottom: 'var(--spacing-md)' }}>
-              {project.description.length > 120 
-                ? `${project.description.substring(0, 120)}...` 
-                : project.description
-              }
-            </p>
-            
-            <div className={styles.projectMeta}>
-              <div className={styles.metaItem}>
-                <MapPin size={16} />
-                <span className="text-sm">{project.location}</span>
-              </div>
-              <div className={styles.metaItem}>
-                <Calendar size={16} />
-                <span className="text-sm">{formatDate(project.startDate)}</span>
-              </div>
-              <div className={styles.metaItem}>
-                <Users size={16} />
-                <span className="text-sm">
-                  {project.currentVolunteers}/{project.maxVolunteers} voluntari
-                </span>
-              </div>
-            </div>
-
-            {project.requiredSkills.length > 0 && (
-              <div className={styles.skills}>
-                {project.requiredSkills.slice(0, 3).map((skill, index) => (
-                  <span key={index} className={`badge ${styles.skillBadge}`}>
-                    {skill}
-                  </span>
-                ))}
-                {project.requiredSkills.length > 3 && (
-                  <span className="text-xs text-muted">
-                    +{project.requiredSkills.length - 3} mai multe
-                  </span>
-                )}
-              </div>
-            )}
-
-            <div className={styles.progress}>
-              <div className={styles.progressHeader}>
-                <span className="text-sm font-medium">Progres</span>
-                <span className="text-sm text-secondary">{project.progress}%</span>
-              </div>
-              <div className={styles.progressBar}>
-                <div 
-                  className={styles.progressFill}
-                  style={{ width: `${project.progress}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="card-footer">
-            <div className={styles.cardActions} onClick={(e) => e.preventDefault()}>
-              <button onClick={handleDonateClick} className="btn btn-error">
-                <Heart size={16} />
-                Donează
-              </button>
-              {project.status !== 'Finalizat' && project.progress < 100 && (
-                <>
-                  {showSuccessMessage ? (
-                    <div className={styles.successMessage}>
-                      <CheckCircle size={16} />
-                      Aplicare trimisă cu succes!
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={handleApplyClick} 
-                      className="btn btn-primary"
-                      disabled={applicationStatus === 'Pending'}
-                    >
-                      {applicationStatus === 'Pending' ? 'Aplicare în așteptare' : 'Susține'}
-                      <Users size={16} />
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </Link>
-      
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        requiredRole={UserRoles.VOLUNTEER}
-        redirectPath={`/proiecte/${project.id}`}
-      />
-    </>
   );
 };
 

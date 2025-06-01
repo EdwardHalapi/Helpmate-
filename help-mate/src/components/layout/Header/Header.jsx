@@ -9,7 +9,6 @@ const Header = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const isDashboard = location.pathname.includes('/dashboard');
 
   const handleSignOut = async () => {
     try {
@@ -20,10 +19,15 @@ const Header = () => {
     }
   };
 
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    navigate('/');
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.container}>
-        <Link to="/" className={styles.logo}>
+        <Link to="/" className={styles.logo} onClick={handleLogoClick}>
           HelpMate
         </Link>
 

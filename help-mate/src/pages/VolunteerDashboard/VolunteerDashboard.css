@@ -276,7 +276,7 @@
 
 .application-info {
   display: flex;
-  flex-direction: column;
+    flex-direction: column;
   gap: 0.25rem;
 }
 
@@ -291,7 +291,7 @@
   gap: 0.5rem;
   color: var(--text-secondary);
   font-size: 0.875rem;
-}
+  }
 
 .application-status {
   color: var(--blue);
@@ -300,7 +300,7 @@
   padding: 0.25rem 0.75rem;
   background: var(--blue-light);
   border-radius: 1rem;
-}
+  }
 
 /* Empty State */
 .empty-state {
