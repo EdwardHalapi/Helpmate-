@@ -1,46 +1,46 @@
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
   limit,
   serverTimestamp,
-  onSnapshot
-} from 'firebase/firestore';
-import { db } from '../firebase/config'; // Presupunem că ai configurat Firebase
-import { Project } from '../../models/Project'; // Importăm clasa Project
+  onSnapshot,
+} from "firebase/firestore";
+import { db } from "../firebase/config"; // Presupunem că ai configurat Firebase
+import { Project } from "../../models/Project"; // Importăm clasa Project
 
-const COLLECTION_NAME = 'projects';
+const COLLECTION_NAME = "projects";
 
 // Structura pentru Firestore
 const PROJECT_STRUCTURE = {
-  title: '',
-  description: '',
+  title: "",
+  description: "",
   organizationId: null,
   managerId: null,
-  status: 'Planificat',
-  priority: 'Medie',
+  status: "Planificat",
+  priority: "Medie",
   startDate: null,
   endDate: null,
   maxVolunteers: 0,
   currentVolunteers: 0,
   requiredSkills: [],
-  location: '',
+  location: "",
   createdAt: null,
   updatedAt: null,
   totalHours: 0,
   completedTasks: 0,
-  totalTasks: 0
+  totalTasks: 0,
+  tasks: [],
 };
 
 class ProjectsService {
-  
   /**
    * Obține toate proiectele
    * @param {Object} filters - Filtre opționale pentru căutare
@@ -49,28 +49,28 @@ class ProjectsService {
   async getAllProjects(filters = {}) {
     try {
       let q = collection(db, COLLECTION_NAME);
-      
+
       // Aplicăm filtrele
       const conditions = [];
-      
+
       if (filters.status) {
-        conditions.push(where('status', '==', filters.status));
+        conditions.push(where("status", "==", filters.status));
       }
-      
+
       if (filters.priority) {
-        conditions.push(where('priority', '==', filters.priority));
+        conditions.push(where("priority", "==", filters.priority));
       }
-      
+
       if (filters.location) {
-        conditions.push(where('location', '==', filters.location));
+        conditions.push(where("location", "==", filters.location));
       }
 
       if (filters.organizationId) {
-        conditions.push(where('organizationId', '==', filters.organizationId));
+        conditions.push(where("organizationId", "==", filters.organizationId));
       }
 
       if (filters.managerId) {
-        conditions.push(where('managerId', '==', filters.managerId));
+        conditions.push(where("managerId", "==", filters.managerId));
       }
 
       // Construim query-ul cu condițiile
@@ -80,9 +80,12 @@ class ProjectsService {
 
       // Sortare
       if (filters.orderBy) {
-        q = query(q, orderBy(filters.orderBy, filters.orderDirection || 'desc'));
+        q = query(
+          q,
+          orderBy(filters.orderBy, filters.orderDirection || "desc")
+        );
       } else {
-        q = query(q, orderBy('createdAt', 'desc'));
+        q = query(q, orderBy("createdAt", "desc"));
       }
 
       // Limita
@@ -92,24 +95,26 @@ class ProjectsService {
 
       const querySnapshot = await getDocs(q);
       const projects = [];
-      
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        projects.push(new Project({
-          id: doc.id,
-          ...data,
-          // Convertim timestamp-urile în Date objects
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-          startDate: data.startDate?.toDate() || null,
-          endDate: data.endDate?.toDate() || null
-        }));
+        projects.push(
+          new Project({
+            id: doc.id,
+            ...data,
+            // Convertim timestamp-urile în Date objects
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date(),
+            startDate: data.startDate?.toDate() || null,
+            endDate: data.endDate?.toDate() || null,
+          })
+        );
       });
 
       return projects;
     } catch (error) {
-      console.error('Eroare la obținerea proiectelor:', error);
-      throw new Error('Nu s-au putut încărca proiectele');
+      console.error("Eroare la obținerea proiectelor:", error);
+      throw new Error("Nu s-au putut încărca proiectele");
     }
   }
 
@@ -120,10 +125,10 @@ class ProjectsService {
    */
   async getProjectById(projectId) {
     try {
-      console.log('Getting project document for ID:', projectId);
-      const projectRef = doc(db, 'projects', projectId);
+      console.log("Getting project document for ID:", projectId);
+      const projectRef = doc(db, "projects", projectId);
       const projectSnap = await getDoc(projectRef);
-      
+
       if (projectSnap.exists()) {
         const data = projectSnap.data();
         return new Project({
@@ -134,12 +139,12 @@ class ProjectsService {
           updatedAt: data.updatedAt?.toDate() || new Date(),
           startDate: data.startDate?.toDate() || null,
           endDate: data.endDate?.toDate() || null,
-          lastDonationAt: data.lastDonationAt?.toDate() || null
+          lastDonationAt: new Date(data.lastDonationAt).toDateString() || null,
         });
       }
       return null;
     } catch (error) {
-      console.error('Error in getProjectById:', error);
+      console.error("Error in getProjectById:", error);
       throw error;
     }
   }
@@ -152,7 +157,13 @@ class ProjectsService {
   async createProject(projectData) {
     try {
       // Validăm datele obligatorii
-      const requiredFields = ['title', 'description', 'organizationId', 'managerId', 'location'];
+      const requiredFields = [
+        "title",
+        "description",
+        "organizationId",
+        "managerId",
+        "location",
+      ];
       for (const field of requiredFields) {
         if (!projectData[field]) {
           throw new Error(`Câmpul ${field} este obligatoriu`);
@@ -169,7 +180,7 @@ class ProjectsService {
         totalHours: projectData.totalHours || 0,
         completedTasks: projectData.completedTasks || 0,
         totalTasks: projectData.totalTasks || 0,
-        requiredSkills: projectData.requiredSkills || []
+        requiredSkills: projectData.requiredSkills || [],
       };
 
       // Eliminăm id-ul dacă există (Firestore îl generează automat)
@@ -177,23 +188,28 @@ class ProjectsService {
 
       // Convertim datele în format Firestore
       if (projectData.startDate) {
-        projectToSave.startDate = projectData.startDate instanceof Date 
-          ? projectData.startDate 
-          : new Date(projectData.startDate);
-      }
-      
-      if (projectData.endDate) {
-        projectToSave.endDate = projectData.endDate instanceof Date 
-          ? projectData.endDate 
-          : new Date(projectData.endDate);
+        projectToSave.startDate =
+          projectData.startDate instanceof Date
+            ? projectData.startDate
+            : new Date(projectData.startDate);
       }
 
-      const docRef = await addDoc(collection(db, COLLECTION_NAME), projectToSave);
-      
+      if (projectData.endDate) {
+        projectToSave.endDate =
+          projectData.endDate instanceof Date
+            ? projectData.endDate
+            : new Date(projectData.endDate);
+      }
+
+      const docRef = await addDoc(
+        collection(db, COLLECTION_NAME),
+        projectToSave
+      );
+
       return docRef.id;
     } catch (error) {
-      console.error('Eroare la crearea proiectului:', error);
-      throw new Error('Nu s-a putut crea proiectul: ' + error.message);
+      console.error("Eroare la crearea proiectului:", error);
+      throw new Error("Nu s-a putut crea proiectul: " + error.message);
     }
   }
 
@@ -206,13 +222,13 @@ class ProjectsService {
   async updateProject(projectId, updateData) {
     try {
       if (!projectId) {
-        throw new Error('ID-ul proiectului este necesar');
+        throw new Error("ID-ul proiectului este necesar");
       }
 
       // Adăugăm timestamp-ul de actualizare
       const dataToUpdate = {
         ...updateData,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       // Eliminăm id-ul din datele de update
@@ -220,38 +236,53 @@ class ProjectsService {
 
       // Convertim datele dacă este necesar
       if (updateData.startDate) {
-        dataToUpdate.startDate = updateData.startDate instanceof Date 
-          ? updateData.startDate 
-          : new Date(updateData.startDate);
+        dataToUpdate.startDate =
+          updateData.startDate instanceof Date
+            ? updateData.startDate
+            : new Date(updateData.startDate);
       }
-      
+
       if (updateData.endDate) {
-        dataToUpdate.endDate = updateData.endDate instanceof Date 
-          ? updateData.endDate 
-          : new Date(updateData.endDate);
+        dataToUpdate.endDate =
+          updateData.endDate instanceof Date
+            ? updateData.endDate
+            : new Date(updateData.endDate);
       }
 
       // Actualizăm progresul dacă au fost modificate task-urile
-      if (updateData.completedTasks !== undefined || updateData.totalTasks !== undefined) {
+      if (
+        updateData.completedTasks !== undefined ||
+        updateData.totalTasks !== undefined
+      ) {
         const currentProject = await this.getProjectById(projectId);
         if (currentProject) {
-          const completedTasks = updateData.completedTasks !== undefined ? updateData.completedTasks : currentProject.completedTasks;
-          const totalTasks = updateData.totalTasks !== undefined ? updateData.totalTasks : currentProject.totalTasks;
-          
+          const completedTasks =
+            updateData.completedTasks !== undefined
+              ? updateData.completedTasks
+              : currentProject.completedTasks;
+          const totalTasks =
+            updateData.totalTasks !== undefined
+              ? updateData.totalTasks
+              : currentProject.totalTasks;
+
           // Actualizăm status-ul dacă proiectul e complet
-          if (totalTasks > 0 && completedTasks >= totalTasks && currentProject.status !== 'Finalizat') {
-            dataToUpdate.status = 'Finalizat';
+          if (
+            totalTasks > 0 &&
+            completedTasks >= totalTasks &&
+            currentProject.status !== "Finalizat"
+          ) {
+            dataToUpdate.status = "Finalizat";
           }
         }
       }
 
       const docRef = doc(db, COLLECTION_NAME, projectId);
       await updateDoc(docRef, dataToUpdate);
-      
+
       return true;
     } catch (error) {
-      console.error('Eroare la actualizarea proiectului:', error);
-      throw new Error('Nu s-a putut actualiza proiectul: ' + error.message);
+      console.error("Eroare la actualizarea proiectului:", error);
+      throw new Error("Nu s-a putut actualiza proiectul: " + error.message);
     }
   }
 
@@ -263,16 +294,16 @@ class ProjectsService {
   async deleteProject(projectId) {
     try {
       if (!projectId) {
-        throw new Error('ID-ul proiectului este necesar');
+        throw new Error("ID-ul proiectului este necesar");
       }
 
       const docRef = doc(db, COLLECTION_NAME, projectId);
       await deleteDoc(docRef);
-      
+
       return true;
     } catch (error) {
-      console.error('Eroare la ștergerea proiectului:', error);
-      throw new Error('Nu s-a putut șterge proiectul');
+      console.error("Eroare la ștergerea proiectului:", error);
+      throw new Error("Nu s-a putut șterge proiectul");
     }
   }
 
@@ -285,27 +316,30 @@ class ProjectsService {
   async addVolunteerToProject(projectId, volunteerId) {
     try {
       const project = await this.getProjectById(projectId);
-      
+
       if (!project) {
-        throw new Error('Proiectul nu există');
+        throw new Error("Proiectul nu există");
       }
 
       if (project.currentVolunteers >= project.maxVolunteers) {
-        throw new Error('Proiectul a atins numărul maxim de voluntari');
+        throw new Error("Proiectul a atins numărul maxim de voluntari");
       }
 
       const newCurrentVolunteers = project.currentVolunteers + 1;
-      const newStatus = newCurrentVolunteers >= project.maxVolunteers ? 'Complet' : project.status;
+      const newStatus =
+        newCurrentVolunteers >= project.maxVolunteers
+          ? "Complet"
+          : project.status;
 
       await this.updateProject(projectId, {
         currentVolunteers: newCurrentVolunteers,
-        status: newStatus
+        status: newStatus,
       });
 
       return true;
     } catch (error) {
-      console.error('Eroare la adăugarea voluntarului:', error);
-      throw new Error('Nu s-a putut adăuga voluntarul: ' + error.message);
+      console.error("Eroare la adăugarea voluntarului:", error);
+      throw new Error("Nu s-a putut adăuga voluntarul: " + error.message);
     }
   }
 
@@ -318,27 +352,31 @@ class ProjectsService {
   async removeVolunteerFromProject(projectId, volunteerId) {
     try {
       const project = await this.getProjectById(projectId);
-      
+
       if (!project) {
-        throw new Error('Proiectul nu există');
+        throw new Error("Proiectul nu există");
       }
 
       if (project.currentVolunteers <= 0) {
-        throw new Error('Nu există voluntari de eliminat');
+        throw new Error("Nu există voluntari de eliminat");
       }
 
       const newCurrentVolunteers = Math.max(0, project.currentVolunteers - 1);
-      const newStatus = newCurrentVolunteers < project.maxVolunteers && project.status === 'Complet' ? 'Activ' : project.status;
+      const newStatus =
+        newCurrentVolunteers < project.maxVolunteers &&
+        project.status === "Complet"
+          ? "Activ"
+          : project.status;
 
       await this.updateProject(projectId, {
         currentVolunteers: newCurrentVolunteers,
-        status: newStatus
+        status: newStatus,
       });
 
       return true;
     } catch (error) {
-      console.error('Eroare la eliminarea voluntarului:', error);
-      throw new Error('Nu s-a putut elimina voluntarul: ' + error.message);
+      console.error("Eroare la eliminarea voluntarului:", error);
+      throw new Error("Nu s-a putut elimina voluntarul: " + error.message);
     }
   }
 
@@ -352,7 +390,7 @@ class ProjectsService {
   async updateProjectProgress(projectId, completedTasks, totalTasks = null) {
     try {
       const updateData = { completedTasks };
-      
+
       if (totalTasks !== null) {
         updateData.totalTasks = totalTasks;
       }
@@ -360,8 +398,8 @@ class ProjectsService {
       await this.updateProject(projectId, updateData);
       return true;
     } catch (error) {
-      console.error('Eroare la actualizarea progresului:', error);
-      throw new Error('Nu s-a putut actualiza progresul: ' + error.message);
+      console.error("Eroare la actualizarea progresului:", error);
+      throw new Error("Nu s-a putut actualiza progresul: " + error.message);
     }
   }
 
@@ -374,21 +412,21 @@ class ProjectsService {
   async addHoursToProject(projectId, hours) {
     try {
       const project = await this.getProjectById(projectId);
-      
+
       if (!project) {
-        throw new Error('Proiectul nu există');
+        throw new Error("Proiectul nu există");
       }
 
       const newTotalHours = project.totalHours + hours;
 
       await this.updateProject(projectId, {
-        totalHours: newTotalHours
+        totalHours: newTotalHours,
       });
 
       return true;
     } catch (error) {
-      console.error('Eroare la adăugarea orelor:', error);
-      throw new Error('Nu s-au putut adăuga orele: ' + error.message);
+      console.error("Eroare la adăugarea orelor:", error);
+      throw new Error("Nu s-au putut adăuga orele: " + error.message);
     }
   }
 
@@ -401,54 +439,60 @@ class ProjectsService {
   subscribeToProjects(callback, filters = {}) {
     try {
       let q = collection(db, COLLECTION_NAME);
-      
+
       // Aplicăm filtrele
       const conditions = [];
-      
+
       if (filters.status) {
-        conditions.push(where('status', '==', filters.status));
+        conditions.push(where("status", "==", filters.status));
       }
-      
+
       if (filters.priority) {
-        conditions.push(where('priority', '==', filters.priority));
+        conditions.push(where("priority", "==", filters.priority));
       }
 
       if (filters.organizationId) {
-        conditions.push(where('organizationId', '==', filters.organizationId));
+        conditions.push(where("organizationId", "==", filters.organizationId));
       }
 
       if (filters.managerId) {
-        conditions.push(where('managerId', '==', filters.managerId));
+        conditions.push(where("managerId", "==", filters.managerId));
       }
 
       if (conditions.length > 0) {
-        q = query(q, ...conditions, orderBy('createdAt', 'desc'));
+        q = query(q, ...conditions, orderBy("createdAt", "desc"));
       } else {
-        q = query(q, orderBy('createdAt', 'desc'));
+        q = query(q, orderBy("createdAt", "desc"));
       }
 
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const projects = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          projects.push(new Project({
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-            startDate: data.startDate?.toDate() || null,
-            endDate: data.endDate?.toDate() || null
-          }));
-        });
-        callback(projects);
-      }, (error) => {
-        console.error('Eroare la subscription:', error);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const projects = [];
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            projects.push(
+              new Project({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                updatedAt: data.updatedAt?.toDate() || new Date(),
+                startDate: data.startDate?.toDate() || null,
+                endDate: data.endDate?.toDate() || null,
+              })
+            );
+          });
+          callback(projects);
+        },
+        (error) => {
+          console.error("Eroare la subscription:", error);
+        }
+      );
 
       return unsubscribe;
     } catch (error) {
-      console.error('Eroare la crearea subscription-ului:', error);
-      throw new Error('Nu s-a putut crea subscription-ul');
+      console.error("Eroare la crearea subscription-ului:", error);
+      throw new Error("Nu s-a putut crea subscription-ul");
     }
   }
 
@@ -479,35 +523,44 @@ class ProjectsService {
     try {
       const filters = organizationId ? { organizationId } : {};
       const allProjects = await this.getAllProjects(filters);
-      
+
       const stats = {
         total: allProjects.length,
-        planificate: allProjects.filter(p => p.status === 'Planificat').length,
-        active: allProjects.filter(p => p.status === 'Activ').length,
-        finalizate: allProjects.filter(p => p.status === 'Finalizat').length,
-        anulate: allProjects.filter(p => p.status === 'Anulat').length,
-        totalVolunteers: allProjects.reduce((sum, p) => sum + p.currentVolunteers, 0),
+        planificate: allProjects.filter((p) => p.status === "Planificat")
+          .length,
+        active: allProjects.filter((p) => p.status === "Activ").length,
+        finalizate: allProjects.filter((p) => p.status === "Finalizat").length,
+        anulate: allProjects.filter((p) => p.status === "Anulat").length,
+        totalVolunteers: allProjects.reduce(
+          (sum, p) => sum + p.currentVolunteers,
+          0
+        ),
         totalHours: allProjects.reduce((sum, p) => sum + p.totalHours, 0),
-        averageProgress: allProjects.length > 0 
-          ? Math.round(allProjects.reduce((sum, p) => sum + p.progress, 0) / allProjects.length)
-          : 0,
+        averageProgress:
+          allProjects.length > 0
+            ? Math.round(
+                allProjects.reduce((sum, p) => sum + p.progress, 0) /
+                  allProjects.length
+              )
+            : 0,
         byPriority: {
-          'Scăzută': allProjects.filter(p => p.priority === 'Scăzută').length,
-          'Medie': allProjects.filter(p => p.priority === 'Medie').length,
-          'Ridicată': allProjects.filter(p => p.priority === 'Ridicată').length
+          Scăzută: allProjects.filter((p) => p.priority === "Scăzută").length,
+          Medie: allProjects.filter((p) => p.priority === "Medie").length,
+          Ridicată: allProjects.filter((p) => p.priority === "Ridicată").length,
         },
         byStatus: {
-          'Planificat': allProjects.filter(p => p.status === 'Planificat').length,
-          'Activ': allProjects.filter(p => p.status === 'Activ').length,
-          'Finalizat': allProjects.filter(p => p.status === 'Finalizat').length,
-          'Anulat': allProjects.filter(p => p.status === 'Anulat').length
-        }
+          Planificat: allProjects.filter((p) => p.status === "Planificat")
+            .length,
+          Activ: allProjects.filter((p) => p.status === "Activ").length,
+          Finalizat: allProjects.filter((p) => p.status === "Finalizat").length,
+          Anulat: allProjects.filter((p) => p.status === "Anulat").length,
+        },
       };
 
       return stats;
     } catch (error) {
-      console.error('Eroare la obținerea statisticilor:', error);
-      throw new Error('Nu s-au putut obține statisticile');
+      console.error("Eroare la obținerea statisticilor:", error);
+      throw new Error("Nu s-au putut obține statisticile");
     }
   }
 
@@ -521,20 +574,20 @@ class ProjectsService {
     try {
       // Obținem toate proiectele cu filtrele aplicate
       const allProjects = await this.getAllProjects(filters);
-      
-      if (!searchTerm || searchTerm.trim() === '') {
+
+      if (!searchTerm || searchTerm.trim() === "") {
         return allProjects;
       }
 
       const searchTermLower = searchTerm.toLowerCase().trim();
-      
+
       // Filtrăm după termen
-      const filteredProjects = allProjects.filter(project => {
+      const filteredProjects = allProjects.filter((project) => {
         return (
           project.title.toLowerCase().includes(searchTermLower) ||
           project.description.toLowerCase().includes(searchTermLower) ||
           project.location.toLowerCase().includes(searchTermLower) ||
-          project.requiredSkills.some(skill => 
+          project.requiredSkills.some((skill) =>
             skill.toLowerCase().includes(searchTermLower)
           )
         );
@@ -542,8 +595,8 @@ class ProjectsService {
 
       return filteredProjects;
     } catch (error) {
-      console.error('Eroare la căutarea proiectelor:', error);
-      throw new Error('Nu s-au putut căuta proiectele');
+      console.error("Eroare la căutarea proiectelor:", error);
+      throw new Error("Nu s-au putut căuta proiectele");
     }
   }
 
@@ -553,7 +606,7 @@ class ProjectsService {
    * @returns {Promise<Array<Project>>} Lista de proiecte active
    */
   async getActiveProjects(filters = {}) {
-    return this.getAllProjects({ ...filters, status: 'Activ' });
+    return this.getAllProjects({ ...filters, status: "Activ" });
   }
 
   /**
@@ -562,7 +615,7 @@ class ProjectsService {
    * @returns {Promise<Array<Project>>} Lista de proiecte finalizate
    */
   async getCompletedProjects(filters = {}) {
-    return this.getAllProjects({ ...filters, status: 'Finalizat' });
+    return this.getAllProjects({ ...filters, status: "Finalizat" });
   }
 
   /**
@@ -573,13 +626,15 @@ class ProjectsService {
   async markProjectAsCompleted(projectId) {
     try {
       await this.updateProject(projectId, {
-        status: 'Finalizat',
-        completedTasks: await this.getProjectById(projectId).then(p => p?.totalTasks || 0)
+        status: "Finalizat",
+        completedTasks: await this.getProjectById(projectId).then(
+          (p) => p?.totalTasks || 0
+        ),
       });
       return true;
     } catch (error) {
-      console.error('Eroare la marcarea proiectului ca finalizat:', error);
-      throw new Error('Nu s-a putut marca proiectul ca finalizat');
+      console.error("Eroare la marcarea proiectului ca finalizat:", error);
+      throw new Error("Nu s-a putut marca proiectul ca finalizat");
     }
   }
 
@@ -591,12 +646,12 @@ class ProjectsService {
   async activateProject(projectId) {
     try {
       await this.updateProject(projectId, {
-        status: 'Activ'
+        status: "Activ",
       });
       return true;
     } catch (error) {
-      console.error('Eroare la activarea proiectului:', error);
-      throw new Error('Nu s-a putut activa proiectul');
+      console.error("Eroare la activarea proiectului:", error);
+      throw new Error("Nu s-a putut activa proiectul");
     }
   }
 
@@ -606,22 +661,21 @@ class ProjectsService {
    * @param {string} reason - Motivul anulării (opțional)
    * @returns {Promise<boolean>}
    */
-  async cancelProject(projectId, reason = '') {
+  async cancelProject(projectId, reason = "") {
     try {
-      const updateData = { status: 'Anulat' };
+      const updateData = { status: "Anulat" };
       if (reason) {
         updateData.cancellationReason = reason;
       }
-      
+
       await this.updateProject(projectId, updateData);
       return true;
     } catch (error) {
-      console.error('Eroare la anularea proiectului:', error);
-      throw new Error('Nu s-a putut anula proiectul');
+      console.error("Eroare la anularea proiectului:", error);
+      throw new Error("Nu s-a putut anula proiectul");
     }
   }
 }
-
 
 // Exportăm doar serviciul și structura, Project vine din models
 const projectsService = new ProjectsService();
