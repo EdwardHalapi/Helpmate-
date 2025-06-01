@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Bell, Plus, Filter, Search, ArrowLeft, Target, TrendingUp, Calendar, Users, Clock, CheckSquare, X, MapPin, MoreVertical, Edit2, Trash2, SlidersHorizontal, Tag, Check } from 'lucide-react';
+import { Bell, Plus, Filter, Search, ArrowLeft, Target, TrendingUp, Calendar, Users, Clock, CheckSquare, X, MapPin, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './OrganizationProfile.css';
-import ProjectDetails from './ProjectDetails';
 
 const CreateProjectModal = ({ isOpen, onClose, onSubmit, editProject = null }) => {
   const [formData, setFormData] = useState({
@@ -449,206 +448,24 @@ const ProjectCardMenu = ({ onEdit, onDelete }) => {
   );
 };
 
-const FilterModal = ({ isOpen, onClose, filters, onApplyFilters }) => {
-  const [localFilters, setLocalFilters] = useState(filters);
-
-  const categories = [
-    'Mediu',
-    'Educație',
-    'Social',
-    'Cultural',
-    'Sport',
-    'Sănătate',
-    'Tehnologie',
-    'Altele'
-  ];
-
-  const priorities = ['Ridicată', 'Medie', 'Scăzută'];
-  const statuses = ['Toate', 'Activ', 'Planificat'];
-
-  const handleFilterChange = (key, value) => {
-    setLocalFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const handleCategoryToggle = (category) => {
-    setLocalFilters(prev => ({
-      ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category)
-        : [...prev.categories, category]
-    }));
-  };
-
-  const handleApply = () => {
-    onApplyFilters(localFilters);
-    onClose();
-  };
-
-  const handleReset = () => {
-    const resetFilters = {
-      status: 'Toate',
-      priority: 'Toate',
-      categories: [],
-      minVolunteers: '',
-      maxVolunteers: '',
-      sortBy: 'newest'
-    };
-    setLocalFilters(resetFilters);
-    onApplyFilters(resetFilters);
-    onClose();
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="modal-overlay">
-      <div className="modal-content filter-modal">
-        <div className="modal-header">
-          <h2>Filtrare Proiecte</h2>
-          <button className="close-button" onClick={onClose}>
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="filter-sections">
-          <div className="filter-section">
-            <h3>Status</h3>
-            <div className="filter-options">
-              {statuses.map(status => (
-                <button
-                  key={status}
-                  className={`filter-option ${localFilters.status === status ? 'active' : ''}`}
-                  onClick={() => handleFilterChange('status', status)}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <h3>Prioritate</h3>
-            <div className="filter-options">
-              <button
-                className={`filter-option ${localFilters.priority === 'Toate' ? 'active' : ''}`}
-                onClick={() => handleFilterChange('priority', 'Toate')}
-              >
-                Toate
-              </button>
-              {priorities.map(priority => (
-                <button
-                  key={priority}
-                  className={`filter-option ${localFilters.priority === priority ? 'active' : ''}`}
-                  onClick={() => handleFilterChange('priority', priority)}
-                >
-                  {priority}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <h3>Categorii</h3>
-            <div className="category-grid">
-              {categories.map(category => (
-                <button
-                  key={category}
-                  className={`category-option ${localFilters.categories.includes(category) ? 'active' : ''}`}
-                  onClick={() => handleCategoryToggle(category)}
-                >
-                  {category}
-                  {localFilters.categories.includes(category) && (
-                    <Check size={16} className="check-icon" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <h3>Număr de Voluntari</h3>
-            <div className="volunteer-range">
-              <input
-                type="number"
-                placeholder="Min"
-                value={localFilters.minVolunteers}
-                onChange={(e) => handleFilterChange('minVolunteers', e.target.value)}
-                min="0"
-              />
-              <span>-</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={localFilters.maxVolunteers}
-                onChange={(e) => handleFilterChange('maxVolunteers', e.target.value)}
-                min="0"
-              />
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <h3>Sortare</h3>
-            <select
-              value={localFilters.sortBy}
-              onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className="sort-select"
-            >
-              <option value="newest">Cele mai noi</option>
-              <option value="oldest">Cele mai vechi</option>
-              <option value="volunteers-asc">Voluntari (crescător)</option>
-              <option value="volunteers-desc">Voluntari (descrescător)</option>
-              <option value="progress-asc">Progres (crescător)</option>
-              <option value="progress-desc">Progres (descrescător)</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="filter-actions">
-          <button className="btn-reset" onClick={handleReset}>
-            Resetează
-          </button>
-          <button className="btn-apply" onClick={handleApply}>
-            Aplică Filtrele
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const OrganizationProfile = () => {
-  const [userName] = useState("Andrei");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [projectToEdit, setProjectToEdit] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterOption, setFilterOption] = useState('toate');
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-
+  const userName = "Andrei"; // Acest nume ar trebui să vină din context/props/backend
   const [projects, setProjects] = useState([
     {
       id: 1,
-      title: "Curățenie în Parcul Central",
-      description: "Organizăm o acțiune de curățenie în Parcul Central",
-      category: "Mediu",
-      location: "București",
-      startDate: "2024-04-15",
-      endDate: "2024-04-15",
-      status: ["Activ", "success"],
-      priority: "Ridicată",
-      progress: 75,
-      volunteers: "15/20",
-      skills: ["Lucru în echipă", "Organizare"],
-      tasks: [
-        { id: 1, title: "Colectare deșeuri", completed: true },
-        { id: 2, title: "Plantare copaci", completed: false }
-      ]
+      title: "Curățenie Parc Central",
+      description: "Activitate de curățenie și plantare în parcul central. Contribuim la un mediu mai curat pentru comun...",
+      status: ["Activ", "Ridicată"],
+      progress: 60,
+      volunteers: "12/20",
+      tasks: "6/10",
+      hours: "48h"
     },
     {
       id: 2,
@@ -657,35 +474,10 @@ const OrganizationProfile = () => {
       status: ["Planificat", "Medie"],
       progress: 0,
       volunteers: "8/15",
-      tasks: [
-        { id: 1, title: "Pregătire materiale", completed: false },
-        { id: 2, title: "Organizare sesiuni", completed: false }
-      ],
+      tasks: "0/12",
       hours: "0h"
     }
   ]);
-
-  const stats = {
-    totalProjects: projects.length,
-    activeProjects: projects.filter(p => p.status[0] === "Activ").length,
-    plannedProjects: projects.filter(p => p.status[0] === "Planificat").length,
-    completedProjects: projects.filter(p => p.status[0] === "Finalizat").length,
-    totalVolunteers: projects.reduce((total, project) => {
-      const [current] = project.volunteers.split('/').map(Number);
-      return total + current;
-    }, 0),
-    totalPositions: projects.reduce((total, project) => {
-      const [, max] = project.volunteers.split('/').map(Number);
-      return total + max;
-    }, 0),
-    averageProgress: Math.round(
-      projects.reduce((sum, project) => sum + project.progress, 0) / projects.length
-    ),
-    totalTasks: projects.reduce((sum, project) => sum + project.tasks.length, 0),
-    completedTasks: projects.reduce((sum, project) => 
-      sum + project.tasks.filter(task => task.completed).length, 0
-    )
-  };
 
   const handleEditProject = (project) => {
     setProjectToEdit(project);
@@ -742,51 +534,22 @@ const OrganizationProfile = () => {
     setShowCreateProject(false);
   };
 
-  const getFilteredProjects = () => {
-    let filtered = [...projects];
+  // Filtrarea proiectelor în funcție de termenul de căutare
+  const filteredProjects = projects.filter(project => 
+    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    // Text search
-    if (searchTerm) {
-      filtered = filtered.filter(project =>
-        project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filter based on selected option
-    switch (filterOption) {
-      case 'active':
-        filtered = filtered.filter(project => project.status[0] === "Activ");
-        break;
-      case 'planned':
-        filtered = filtered.filter(project => project.status[0] === "Planificat");
-        break;
-      case 'available':
-        filtered = filtered.filter(project => {
-          const [current, total] = project.volunteers.split('/').map(Number);
-          return current < total;
-        });
-        break;
-      default:
-        // 'toate' - no filtering needed
-        break;
-    }
-
-    return filtered;
-  };
-
-  const filteredProjects = getFilteredProjects();
-
-  const handleProjectClick = (project) => {
-    setSelectedProject(project);
-  };
-
-  const handleCloseProjectDetails = () => {
-    setSelectedProject(null);
+  // Stats calculate din proiectele filtrate
+  const stats = {
+    totalProjects: projects.length,
+    activeProjects: projects.filter(p => p.status[0] === "Activ").length,
+    plannedProjects: projects.filter(p => p.status[0] === "Planificat").length,
+    activeVolunteers: 68 // Acest număr ar trebui să vină din backend
   };
 
   return (
-    <div className="organization-profile">
+    <>
       <div className="platform-header">
         <div className="platform-header-content">
           <div className="platform-branding">
@@ -848,98 +611,74 @@ const OrganizationProfile = () => {
       </div>
 
       <div className="organization-dashboard">
-        <div className="dashboard-overview">
-          <h2 className="section-title">Prezentare Generală</h2>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon projects-icon">
-                <Target size={24} />
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{stats.totalProjects}</span>
-                <span className="stat-label">Proiecte Totale</span>
-              </div>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon projects-icon">
+              <Target size={24} />
             </div>
-            
-            <div className="stat-card">
-              <div className="stat-icon active-icon">
-                <TrendingUp size={24} />
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{stats.activeProjects}</span>
-                <span className="stat-label">Proiecte Active</span>
-              </div>
+            <div className="stat-info">
+              <span className="stat-value">{stats.totalProjects}</span>
+              <span className="stat-label">Proiecte Totale</span>
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon planned-icon">
-                <Calendar size={24} />
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{stats.plannedProjects}</span>
-                <span className="stat-label">Proiecte Planificate</span>
-              </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon active-icon">
+              <TrendingUp size={24} />
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon volunteers-icon">
-                <Users size={24} />
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{stats.totalVolunteers}</span>
-                <span className="stat-label">Voluntari Activi</span>
-                <span className="stat-secondary">din {stats.totalPositions} poziții</span>
-              </div>
+            <div className="stat-info">
+              <span className="stat-value">{stats.activeProjects}</span>
+              <span className="stat-label">Proiecte Active</span>
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon progress-icon">
-                <CheckSquare size={24} />
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{stats.completedTasks}</span>
-                <span className="stat-label">Task-uri Completate</span>
-                <span className="stat-secondary">din {stats.totalTasks} total</span>
-              </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon planned-icon">
+              <Calendar size={24} />
             </div>
-
-            <div className="stat-card">
-              <div className="stat-icon performance-icon">
-                <TrendingUp size={24} />
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{stats.averageProgress}%</span>
-                <span className="stat-label">Progres Mediu</span>
-              </div>
+            <div className="stat-info">
+              <span className="stat-value">{stats.plannedProjects}</span>
+              <span className="stat-label">Proiecte Planificate</span>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon volunteers-icon">
+              <Users size={24} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{stats.activeVolunteers}</span>
+              <span className="stat-label">Voluntari Activi</span>
             </div>
           </div>
         </div>
 
         <div className="projects-section">
-          <div className="section-header">
-            <h2 className="section-title">Proiectele Mele</h2>
-            <div className="section-actions">
-              <button 
-                className="btn-new-project" 
-                onClick={() => setShowCreateProject(true)}
-              >
-                <Plus size={20} />
-                Crează Proiect
+          <div className="projects-header">
+            <div className="search-bar">
+              <Search size={20} />
+              <input 
+                type="text" 
+                placeholder="Caută proiecte..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="filters">
+              <button className="filter-btn">
+                <Filter size={20} />
+                Toate proiectele
               </button>
             </div>
+            <button 
+              className="btn-new-project" 
+              onClick={() => setShowCreateProject(true)}
+            >
+              <Plus size={20} />
+              Crează Proiect
+            </button>
           </div>
 
           <div className="projects-grid">
             {filteredProjects.map(project => (
-              <div 
-                key={project.id} 
-                className="project-card"
-                onClick={(e) => {
-                  if (!e.target.closest('.card-menu')) {
-                    handleProjectClick(project);
-                  }
-                }}
-              >
+              <div key={project.id} className="project-card">
                 <div className="project-header">
                   <h3>{project.title}</h3>
                   <ProjectCardMenu
@@ -991,7 +730,7 @@ const OrganizationProfile = () => {
                     <CheckSquare size={20} />
                     <div className="metric-content">
                       <span className="metric-label">Sarcini</span>
-                      <span className="metric-value">{project.tasks.length}</span>
+                      <span className="metric-value">{project.tasks}</span>
                     </div>
                   </div>
                   <div className="metric">
@@ -1027,16 +766,7 @@ const OrganizationProfile = () => {
         onConfirm={confirmDelete}
         projectTitle={projectToDelete?.title}
       />
-
-      {selectedProject && (
-        <div className="modal-overlay">
-          <ProjectDetails 
-            project={selectedProject}
-            onClose={handleCloseProjectDetails}
-          />
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 
