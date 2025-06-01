@@ -1,19 +1,73 @@
-import React, { useEffect, useState } from "react";
 import "./VolunteerDashboard.css";
 import "../../styles/variables.css";
 import "../../styles/globals.css";
 import "../../styles/typography.css";
 import "../../styles/components.css";
 import { volunteerService } from "../../services/api/volunteers.js";
+import { ProjectsService } from "../../services/api/projects.js";
 import Header from "../../components/layout/Header/Header.jsx";
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
+import {
+  Search,
+  Calendar,
+  MapPin,
+  Users,
+  Star,
+  Heart,
+  User,
+  Building2,
+  ChevronRight,
+  Filter,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
+import projectsService from "../../services/api/projects.js";
+import { Project } from "../../models/Project.js";
+import styles from "../HomeScreen/HomeScreen.module.css";
 
-const TaskCard = ({ title, status, priority, description, meta, progress }) => {
+const TaskCard = ({
+  title,
+  status,
+  priority,
+  description,
+  meta,
+  progress,
+  action,
+  projectId,
+}) => {
   return (
     <div className="task-card">
       <div className="task-header">
         <span className="task-title">{title}</span>
-        <span className="badge badge-blue">{status}</span>
-        <span className="badge badge-red">{priority}</span>
+        <span
+          className={
+            "badge badge-" +
+            (status == "De făcut"
+              ? "blue"
+              : status == "În progres"
+              ? "yellow"
+              : status == "Finalizat"
+              ? "green"
+              : "blue")
+          }
+        >
+          {status}
+        </span>
+        <span
+          className={
+            "badge badge-" +
+            (priority == "Ridicată"
+              ? "red"
+              : priority == "Medie"
+              ? "yellow"
+              : priority == "Scazută"
+              ? "green"
+              : "blue")
+          }
+        >
+          {priority}
+        </span>
       </div>
       <div className="task-desc">{description}</div>
       <div className="task-meta">
@@ -26,7 +80,11 @@ const TaskCard = ({ title, status, priority, description, meta, progress }) => {
       </div>
       <div className="task-actions">
         <button className="log-hours-btn">+ Loghează ore</button>
-        <select className="status-select">
+        <select
+          className="status-select"
+          onChange={(e) => action(e.target.value, projectId, description)}
+          defaultValue={status}
+        >
           <option>În progres</option>
           <option>De făcut</option>
           <option>Finalizat</option>
@@ -37,16 +95,85 @@ const TaskCard = ({ title, status, priority, description, meta, progress }) => {
 };
 
 const VolunteerDashboard = () => {
-  const [pageSelected, setPageSelected] = useState("task-list");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pageSelected, setPageSelected] = useState("task-list");
   const [user, setUser] = useState(null);
+  const [update, setUpdate] = useState(false);
+
+  const projectsService = new ProjectsService();
+
+  const onStatusChange = (newStatus, projectId, taskDescription) => {
+    console.log("Status schimbat:", newStatus);
+    console.log("ID Proiect:", projectId);
+    console.log("Descriere Task:", taskDescription);
+
+    // setUser((prevUser) => ({
+    //   ...prevUser,
+    //   projects: prevUser.projects.map((project) =>
+    //     project.id === projectId
+    //       ? {
+    //           ...project,
+    //           tasks: project.tasks.map((task) =>
+    //             task.descriere === taskDescription
+    //               ? { ...task, status: newStatus }
+    //               : task
+    //           ),
+    //         }
+    //       : project
+    //   ),
+    // }));
+
+    setUpdate((prev) => !prev); // Force re-render
+
+    const project = user.projects.find((p) => p.id === projectId);
+
+    const updatedTasks = project.tasks.map((task) =>
+      task.descriere === taskDescription ? { ...task, status: newStatus } : task
+    );
+    projectsService.updateProject(projectId, {
+      tasks: project.tasks.map((task) =>
+        task.descriere === taskDescription
+          ? { ...task, status: newStatus }
+          : task
+      ),
+    });
+  };
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         setLoading(true);
         const user = await volunteerService.getById("75ytUh3LjYvs5EXF6itS"); // Exemplu de ID
+
+        user.projects = await Promise.all(
+          user.projects.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
+        user.pending = await Promise.all(
+          user.pending?.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
+        user.refused = await Promise.all(
+          user.refused?.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
+        user.accepted = await Promise.all(
+          user.accepted?.map(async (project) => {
+            const data = await projectsService.getProjectById(project);
+            return { ...data, id: project };
+          })
+        );
+
         console.log("Utilizator încărcat:", user);
         setUser(user);
       } catch (error) {
@@ -58,7 +185,7 @@ const VolunteerDashboard = () => {
     };
 
     loadUser();
-  }, []);
+  }, [update]);
 
   if (loading) {
     return (
@@ -90,7 +217,7 @@ const VolunteerDashboard = () => {
         name={user?.firstName + " " + user?.lastName}
         oreTotale={user?.totalHours || 0}
         taskuriFinalizate={1}
-        proiecteActive={user?.totalProjects || 0}
+        proiecteActive={user?.projects.length || 0}
       />
 
       {/* Tabs */}
@@ -108,10 +235,12 @@ const VolunteerDashboard = () => {
           Proiectele Mele
         </button>
         <button
-          className={"tab " + (pageSelected === "logare-ore" ? "active" : "")}
-          onClick={() => setPageSelected("logare-ore")}
+          className={
+            "tab " + (pageSelected === "status-aplicatii" ? "active" : "")
+          }
+          onClick={() => setPageSelected("status-aplicatii")}
         >
-          Logarea Orelor
+          Status Aplicatii
         </button>
       </nav>
 
@@ -120,19 +249,36 @@ const VolunteerDashboard = () => {
         <main className="dashboard-main">
           <h2 className="section-title">Task-urile Mele</h2>
           <div className="task-list">
-            {/* Task Card 1 */}
-            <TaskCard
-              title="Organizare donații textile"
-              status="În progres"
-              priority="Înaltă"
-              description="Sortarea și organizarea donațiilor de haine pentru distribuire"
-              meta={[
-                "🧹 Curățenie Parc",
-                "📅 Termen: 05.06.2025",
-                "⏱ 2.5h din 4h",
-              ]}
-              progress={63}
-            />
+            {user?.projects.length === 0 && <p>Nu exista taskuri</p>}
+            {user?.projects.map((project) => (
+              <div key={project.id} className="project-tasks">
+                <h3 className="project-title">{project.title}</h3>
+                {project.tasks?.length === 0 && (
+                  <p className="text-secondary">
+                    Nu există task-uri pentru acest proiect.
+                  </p>
+                )}{" "}
+                {project?.tasks?.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    projectId={project.id}
+                    title={task.titlu}
+                    status={task.status}
+                    priority={task.prioritate}
+                    description={task.descriere}
+                    meta={[
+                      `Data limită: ${new Date(
+                        task.termen.seconds
+                      ).toLocaleDateString()}`,
+                      `Ore logate: ${task.ore}h/${task.oreTarget}h`,
+                      `Locatie: ${task.locatie}`,
+                    ]}
+                    progress={(task.ore / task.oreTarget) * 100}
+                    action={onStatusChange}
+                  />
+                ))}
+              </div>
+            ))}
           </div>
         </main>
       )}
@@ -140,24 +286,265 @@ const VolunteerDashboard = () => {
       {pageSelected === "proiecte" && (
         <main className="dashboard-main">
           <h2 className="section-title">Proiectele Mele</h2>
-          <div className="proiecte"></div>
+          <div className="proiecte">
+            {/* Projects Section */}
+            <section className={styles.projects}>
+              <div className={styles.container}>
+                {user?.projects.length === 0 ? (
+                  <div className={styles.noProjects}>
+                    <p className="text-lg text-secondary">
+                      Nu s-au găsit proiecte care să corespundă criteriilor
+                      tale.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.projectsGrid}>
+                    {user?.projects.map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
         </main>
       )}
 
-      {pageSelected === "logare-ore" && (
+      {pageSelected === "status-aplicatii" && (
         <main className="dashboard-main">
-          <h2 className="section-title">Logarea Orelor</h2>
-          <div className="logare-ore">
-            {/* Logare ore component can be added here */}
-            <p>
-              Funcționalitatea de logare a orelor va fi implementată în curând.
-            </p>
+          <h2 className="section-title">Status Aplicatii</h2>
+          <div className="status-aplicatii">
+            {/* Projects Section */}
+            <section className={styles.projects}>
+              <div className={styles.containerAplication}>
+                {user?.pending?.length === 0 &&
+                user?.refused?.length === 0 &&
+                user?.accepted?.lenght === 0 ? (
+                  <div className={styles.noProjects}>
+                    <p className="text-lg text-secondary">
+                      Nu s-au gasit aplicații. Începe prin a te inscrie la unul
+                      dintre proiecte.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.my_container}>
+                    {user?.pending?.map((project) => (
+                      <>
+                        <h1>{project.title} - pending</h1>
+                        <br />
+                      </>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         </main>
       )}
 
       {/* Footer */}
     </div>
+  );
+};
+
+const ProjectAplication = ({ project }) => {
+  const navigate = useNavigate();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Activ":
+        return "badge-success";
+      case "Planificat":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-info";
+      default:
+        return "badge-warning";
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "Ridicată":
+        return styles.priorityHigh;
+      case "Medie":
+        return styles.priorityMedium;
+      case "Scăzută":
+        return styles.priorityLow;
+      default:
+        return styles.priorityMedium;
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "Nu este stabilită";
+    return new Intl.DateTimeFormat("ro-RO", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+  };
+};
+const ProjectCard = ({ project }) => {
+  const navigate = useNavigate();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(null);
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Activ":
+        return "badge-success";
+      case "Planificat":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-info";
+      default:
+        return "badge-warning";
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case "Ridicată":
+        return styles.priorityHigh;
+      case "Medie":
+        return styles.priorityMedium;
+      case "Scăzută":
+        return styles.priorityLow;
+      default:
+        return styles.priorityMedium;
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "Nu este stabilită";
+    return new Intl.DateTimeFormat("ro-RO", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+  };
+
+  const handleApplyClick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      // For now, we'll use a mock volunteer data since we don't have auth yet
+      const mockVolunteer = {
+        volunteerId: "mock-volunteer-id",
+        name: "John Doe",
+        email: "john@example.com",
+      };
+
+      // Update project with new application
+      await projectsService.updateProject(project.id, {
+        pendingVolunteers: [
+          ...(project.pendingVolunteers || []),
+          {
+            volunteerId: mockVolunteer.volunteerId,
+            status: "Pending",
+            appliedAt: new Date().toISOString(),
+            name: mockVolunteer.name,
+            email: mockVolunteer.email,
+          },
+        ],
+      });
+
+      // Show success message
+      setShowSuccessMessage(true);
+      setApplicationStatus("Pending");
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error applying to project:", error);
+      // You might want to show an error message here
+    }
+  };
+
+  return (
+    <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
+      <div className={`card ${styles.projectCard}`}>
+        <div className="card-header">
+          <div className={styles.cardHeader}>
+            <div className={`badge ${getStatusBadgeClass(project.status)}`}>
+              {project.status}
+            </div>
+            <div
+              className={`${styles.priority} ${getPriorityColor(
+                project.priority
+              )}`}
+            >
+              {project.priority}
+            </div>
+          </div>
+        </div>
+
+        <div className="card-body">
+          <h4 className="text-h4">{project.title}</h4>
+          <p
+            className="text-sm text-secondary"
+            style={{ marginBottom: "var(--spacing-md)" }}
+          >
+            {project.description.length > 120
+              ? `${project.description.substring(0, 120)}...`
+              : project.description}
+          </p>
+
+          <div className={styles.projectMeta}>
+            <div className={styles.metaItem}>
+              <MapPin size={16} />
+              <span className="text-sm">{project.location}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <Calendar size={16} />
+              <span className="text-sm">{formatDate(project.startDate)}</span>
+            </div>
+            <div className={styles.metaItem}>
+              <Users size={16} />
+              <span className="text-sm">
+                {project.currentVolunteers}/{project.maxVolunteers} voluntari
+              </span>
+            </div>
+          </div>
+
+          {project.requiredSkills.length > 0 && (
+            <div className={styles.skills}>
+              {project.requiredSkills.slice(0, 3).map((skill, index) => (
+                <span key={index} className={`badge ${styles.skillBadge}`}>
+                  {skill}
+                </span>
+              ))}
+              {project.requiredSkills.length > 3 && (
+                <span className="text-xs text-muted">
+                  +{project.requiredSkills.length - 3} mai multe
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className={styles.progress}>
+            <div className={styles.progressHeader}>
+              <span className="text-sm font-medium">Progres</span>
+              <span className="text-sm text-secondary">
+                {project.progress}%
+              </span>
+            </div>
+            <div className={styles.progressBar}>
+              <div
+                className={styles.progressFill}
+                style={{ width: `${project.progress}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 };
 

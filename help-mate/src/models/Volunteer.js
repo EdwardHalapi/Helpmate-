@@ -18,6 +18,9 @@ export class Volunteer {
     lastActive = new Date(),
     organizationId = null,
     projects = [],
+    accepted = [],
+    pending = [],
+    refused = [],
   }) {
     this.id = id;
     this.firstName = firstName;
@@ -37,6 +40,9 @@ export class Volunteer {
     this.lastActive = lastActive;
     this.organizationId = organizationId;
     this.projects = projects; // Array of project IDs or objects
+    this.accepted = accepted;
+    this.refused = refused;
+    this.pending = pending;
   }
 
   get fullName() {
