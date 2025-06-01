@@ -9,7 +9,7 @@ const OrganizerProjectCard = ({ project, onEdit, onDelete }) => {
 
   const handleCardClick = (e) => {
     if (e.target.closest(`.${styles.cardMenuBtn}`)) return;
-    navigate(`/dashboard/organizator/proiecte/${project.id}`);
+    navigate(`/project/${project.id}`);
   };
 
   const handleMenuClick = (e) => {
