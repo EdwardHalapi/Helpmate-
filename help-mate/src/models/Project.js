@@ -13,6 +13,7 @@ export class Project {
     currentVolunteers = 0,
     requiredSkills = [],
     location = "",
+    coordinates = { lat: null, lng: null },
     createdAt = new Date(),
     updatedAt = new Date(),
     totalHours = 0,
@@ -37,6 +38,7 @@ export class Project {
     this.currentVolunteers = currentVolunteers;
     this.requiredSkills = requiredSkills;
     this.location = location;
+    this.coordinates = coordinates;
     this.createdAt = new Date(createdAt);
     this.updatedAt = new Date(updatedAt);
     this.totalHours = totalHours;
@@ -96,6 +98,7 @@ export class Project {
       currentVolunteers: this.currentVolunteers,
       requiredSkills: this.requiredSkills,
       location: this.location,
+      coordinates: this.coordinates,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       totalHours: this.totalHours,

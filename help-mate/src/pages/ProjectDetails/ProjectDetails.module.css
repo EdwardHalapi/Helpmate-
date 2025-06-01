@@ -1,0 +1,104 @@
+.projectDetails {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #2d3748;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.donateButton,
+.supportButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.donateButton {
+  background-color: #f56565;
+  color: white;
+}
+
+.donateButton:hover {
+  background-color: #e53e3e;
+}
+
+.supportButton {
+  background-color: #4299e1;
+  color: white;
+}
+
+.supportButton:hover {
+  background-color: #3182ce;
+}
+
+/* Status styles */
+.statusPending,
+.statusProcessing,
+.statusApproved,
+.statusRejected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.statusPending {
+  background-color: #edf2f7;
+  color: #718096;
+}
+
+.statusPending svg {
+  animation: spin 2s linear infinite;
+}
+
+.statusProcessing {
+  background-color: #ebf8ff;
+  color: #4299e1;
+}
+
+.statusProcessing svg {
+  animation: spin 2s linear infinite;
+}
+
+.statusApproved {
+  background-color: #f0fff4;
+  color: #48bb78;
+}
+
+.statusRejected {
+  background-color: #fff5f5;
+  color: #f56565;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

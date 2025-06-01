@@ -1,45 +1,49 @@
-import "./Header.css";
+import React from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import UserAvatar from '../../common/UserAvatar/UserAvatar';
+import { LogOut } from 'lucide-react';
+import styles from './Header.module.css';
 
-export default function Header({
-  name,
-  oreTotale = 0,
-  taskuriFinalizate = 0,
-  proiecteActive = 0,
-}) {
+const Header = () => {
+  const { user, signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isDashboard = location.pathname.includes('/dashboard');
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
-    <header className="dashboard-header">
-      <div className="user-info">
-        <div className="avatar">
-          {name
-            .split(" ")
-            .map((part) => part.charAt(0).toUpperCase())
-            .join("")}
-        </div>
-        <div>
-          <div className="welcome">Bun venit, {name || "Utilizator"}!</div>
-          <div className="subtitle">Dashboard Voluntar</div>
-        </div>
-      </div>
-      <div className="stats">
-        {oreTotale > 0 && (
-          <div>
-            <span className="stat-value stat-purple">{oreTotale}h</span>
-            <div className="stat-label">Ore totale</div>
-          </div>
-        )}
-        {taskuriFinalizate > 0 && (
-          <div>
-            <span className="stat-value stat-green">{taskuriFinalizate}</span>
-            <div className="stat-label">Task-uri finalizate</div>
-          </div>
-        )}
-        {proiecteActive > 0 && (
-          <div>
-            <span className="stat-value stat-blue">{proiecteActive}</span>
-            <div className="stat-label">Proiecte active</div>
-          </div>
-        )}
+    <header className={styles.header}>
+      <div className={styles.container}>
+        <Link to="/" className={styles.logo}>
+          HelpMate
+        </Link>
+
+        <nav className={styles.nav}>
+          {user && (
+            <div className={styles.userActions}>
+              <UserAvatar />
+              <button 
+                onClick={handleSignOut}
+                className={styles.logoutButton}
+              >
+                <LogOut size={20} />
+                Deconectare
+              </button>
+            </div>
+          )}
+        </nav>
       </div>
     </header>
   );
-}
+};
+
+export default Header;

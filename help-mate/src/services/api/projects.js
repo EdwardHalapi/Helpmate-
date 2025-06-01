@@ -12,6 +12,7 @@ import {
   limit,
   serverTimestamp,
   onSnapshot,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase/config"; // Presupunem că ai configurat Firebase
 import { Project } from "../../models/Project"; // Importăm clasa Project
@@ -32,6 +33,7 @@ const PROJECT_STRUCTURE = {
   currentVolunteers: 0,
   requiredSkills: [],
   location: "",
+  coordinates: { lat: null, lng: null },
   createdAt: null,
   updatedAt: null,
   totalHours: 0,
@@ -139,7 +141,7 @@ class ProjectsService {
           updatedAt: data.updatedAt?.toDate() || new Date(),
           startDate: data.startDate?.toDate() || null,
           endDate: data.endDate?.toDate() || null,
-          lastDonationAt: new Date(data.lastDonationAt).toDateString() || null,
+          lastDonationAt: data.lastDonationAt?.toDate() || null,
         });
       }
       return null;
@@ -174,6 +176,7 @@ class ProjectsService {
       const projectToSave = {
         ...PROJECT_STRUCTURE,
         ...projectData,
+        coordinates: projectData.coordinates || { lat: null, lng: null },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         currentVolunteers: projectData.currentVolunteers || 0,
@@ -231,46 +234,53 @@ class ProjectsService {
         updatedAt: serverTimestamp(),
       };
 
+      // Handle coordinates update
+      if (updateData.coordinates) {
+        dataToUpdate.coordinates = {
+          lat: updateData.coordinates.lat || null,
+          lng: updateData.coordinates.lng || null,
+        };
+      }
+
       // Eliminăm id-ul din datele de update
       delete dataToUpdate.id;
 
+      // Handle pendingVolunteers array
+      if (updateData.pendingVolunteers) {
+        dataToUpdate.pendingVolunteers = updateData.pendingVolunteers.map(volunteer => ({
+          ...volunteer,
+          appliedAt: volunteer.appliedAt instanceof Timestamp 
+            ? volunteer.appliedAt 
+            : Timestamp.now()
+        }));
+      }
+
       // Convertim datele dacă este necesar
       if (updateData.startDate) {
-        dataToUpdate.startDate =
-          updateData.startDate instanceof Date
-            ? updateData.startDate
-            : new Date(updateData.startDate);
+        dataToUpdate.startDate = updateData.startDate instanceof Date
+          ? Timestamp.fromDate(updateData.startDate)
+          : Timestamp.fromDate(new Date(updateData.startDate));
       }
 
       if (updateData.endDate) {
-        dataToUpdate.endDate =
-          updateData.endDate instanceof Date
-            ? updateData.endDate
-            : new Date(updateData.endDate);
+        dataToUpdate.endDate = updateData.endDate instanceof Date
+          ? Timestamp.fromDate(updateData.endDate)
+          : Timestamp.fromDate(new Date(updateData.endDate));
       }
 
       // Actualizăm progresul dacă au fost modificate task-urile
-      if (
-        updateData.completedTasks !== undefined ||
-        updateData.totalTasks !== undefined
-      ) {
+      if (updateData.completedTasks !== undefined || updateData.totalTasks !== undefined) {
         const currentProject = await this.getProjectById(projectId);
         if (currentProject) {
-          const completedTasks =
-            updateData.completedTasks !== undefined
-              ? updateData.completedTasks
-              : currentProject.completedTasks;
-          const totalTasks =
-            updateData.totalTasks !== undefined
-              ? updateData.totalTasks
-              : currentProject.totalTasks;
+          const completedTasks = updateData.completedTasks !== undefined
+            ? updateData.completedTasks
+            : currentProject.completedTasks;
+          const totalTasks = updateData.totalTasks !== undefined
+            ? updateData.totalTasks
+            : currentProject.totalTasks;
 
           // Actualizăm status-ul dacă proiectul e complet
-          if (
-            totalTasks > 0 &&
-            completedTasks >= totalTasks &&
-            currentProject.status !== "Finalizat"
-          ) {
+          if (totalTasks > 0 && completedTasks >= totalTasks && currentProject.status !== "Finalizat") {
             dataToUpdate.status = "Finalizat";
           }
         }

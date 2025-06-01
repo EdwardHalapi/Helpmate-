@@ -3,12 +3,21 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Search, Calendar, MapPin, Users, Star, Heart, User, Building2, ChevronRight, Filter, ArrowRight, CheckCircle } from 'lucide-react';
 import projectsService from '../../services/api/projects.js';
 import { Project } from '../../models/Project.js';
+import Header from '../../components/layout/Header/Header';
 import styles from './HomeScreen.module.css';
+import { useAuth } from '../../contexts/AuthContext';
+import AuthModal from '../../components/auth/AuthModal';
+import { UserRoles } from '../../services/firebase/auth';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../services/firebase/config';
+import { toast } from 'react-hot-toast';
 
 const SCROLL_POSITION_KEY = 'homeScreenScrollPosition';
 
 const HomeScreen = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +30,9 @@ const HomeScreen = () => {
     planned: 0,
     totalVolunteers: 0,
   });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authRole, setAuthRole] = useState(null);
+  const [redirectPath, setRedirectPath] = useState(null);
 
   // Restore scroll position on mount if coming back from donation
   useEffect(() => {
@@ -129,6 +141,12 @@ const HomeScreen = () => {
     }
   };
 
+  const handleAuthClick = (role, path) => {
+    setAuthRole(role);
+    setRedirectPath(path);
+    setShowAuthModal(true);
+  };
+
   if (loading) {
     return (
       <div className={styles.loading}>
@@ -154,26 +172,7 @@ const HomeScreen = () => {
 
   return (
     <div className={styles.homeScreen}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.container}>
-          <div className={styles.headerContent}>
-            <div className={styles.logo}>
-              <h1 className="text-h2 text-brand">Platformă Voluntari</h1>
-              <p className="text-subtitle">
-                Conectând comunități prin voluntariat
-              </p>
-            </div>
-            <Link
-              to="/login"
-              className={`btn btn-secondary ${styles.loginBtn}`}
-            >
-              <User size={20} />
-              Login
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className={styles.hero}>
@@ -188,42 +187,81 @@ const HomeScreen = () => {
             </p>
 
             <div className={styles.actionCards}>
-              <div className="card">
-                <div className="card-body">
-                  <div className={styles.actionIcon}>
-                    <User size={32} />
+              {user ? (
+                user.role && (
+                  <div 
+                    className="card"
+                    onClick={() => {
+                      if (user.role === UserRoles.VOLUNTEER) {
+                        navigate('/dashboard/voluntar');
+                      } else if (user.role === UserRoles.ORGANIZER) {
+                        navigate('/dashboard/organizator');
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="card-body">
+                      <div className={`${styles.actionIcon} ${user.role === UserRoles.ORGANIZER ? styles.organizerIcon : ''}`}>
+                        {user.role === UserRoles.VOLUNTEER ? <User size={32} /> : <Building2 size={32} />}
+                      </div>
+                      <h3 className="text-h4">
+                        {user.role === UserRoles.VOLUNTEER ? 'Tabloul de Bord Voluntar' : 'Tabloul de Bord Organizator'}
+                      </h3>
+                      <p className="text-base text-secondary">
+                        {user.role === UserRoles.VOLUNTEER 
+                          ? 'Gestionează proiectele și activitățile tale de voluntariat'
+                          : 'Administrează proiectele și voluntarii organizației tale'}
+                      </p>
+                      <button className="btn btn-primary">
+                        {user.role === UserRoles.VOLUNTEER ? 'Vezi Proiectele Tale' : 'Administrează Proiecte'}
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="text-h4">Sunt Voluntar</h3>
-                  <p className="text-base text-secondary">
-                    Caută și aplică la proiecte care te inspiră
-                  </p>
-                  <Link to="/dashboard/voluntar" className="btn btn-primary">
-                    Explorează Proiecte
-                    <ChevronRight size={18} />
-                  </Link>
-                </div>
-              </div>
+                )
+              ) : (
+                <>
+                  <div 
+                    className="card"
+                    onClick={() => handleAuthClick(UserRoles.VOLUNTEER, '/dashboard/voluntar')}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="card-body">
+                      <div className={styles.actionIcon}>
+                        <User size={32} />
+                      </div>
+                      <h3 className="text-h4">Sunt Voluntar</h3>
+                      <p className="text-base text-secondary">
+                        Caută și aplică la proiecte care te inspiră
+                      </p>
+                      <button className="btn btn-primary">
+                        Aplică pentru proiecte
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="card">
-                <div className="card-body">
-                  <div
-                    className={`${styles.actionIcon} ${styles.organizerIcon}`}
+                  <div 
+                    className="card"
+                    onClick={() => handleAuthClick(UserRoles.ORGANIZER, '/dashboard/organizator')}
+                    role="button"
+                    tabIndex={0}
                   >
-                    <Building2 size={32} />
+                    <div className="card-body">
+                      <div className={`${styles.actionIcon} ${styles.organizerIcon}`}>
+                        <Building2 size={32} />
+                      </div>
+                      <h3 className="text-h4">Sunt Organizator</h3>
+                      <p className="text-base text-secondary">
+                        Creează și gestionează proiecte de voluntariat
+                      </p>
+                      <button className="btn btn-primary">
+                        Creează Proiect
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="text-h4">Sunt Organizator</h3>
-                  <p className="text-base text-secondary">
-                    Creează și gestionează proiecte de voluntariat
-                  </p>
-                  <Link
-                    to="/dashboard/organizator/creeaza-proiect"
-                    className="btn btn-secondary"
-                  >
-                    Creează Proiect
-                    <ChevronRight size={18} />
-                  </Link>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -316,7 +354,7 @@ const HomeScreen = () => {
         <div className={styles.container}>
           <div className={styles.footerContent}>
             <div className={styles.footerSection}>
-              <h5 className="text-h5">Platformă Voluntari</h5>
+              <h5 className="text-h5">HelpMate</h5>
               <p className="text-sm text-secondary">
                 Conectând comunități prin voluntariat
               </p>
@@ -390,7 +428,7 @@ const HomeScreen = () => {
           </div>
           <div className={styles.footerBottom}>
             <p className="text-sm text-muted">
-              &copy; 2025 Platformă Voluntari. Toate drepturile rezervate.
+              &copy; 2025 HelpMate. Toate drepturile rezervate.
             </p>
           </div>
         </div>
@@ -398,6 +436,13 @@ const HomeScreen = () => {
 
       {/* Donation Modal Outlet */}
       <Outlet />
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        requiredRole={authRole}
+        redirectPath={redirectPath}
+      />
     </div>
   );
 };
@@ -405,8 +450,11 @@ const HomeScreen = () => {
 // Project Card Component
 const ProjectCard = ({ project }) => {
   const navigate = useNavigate();
+  const { user, profileStatus } = useAuth();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authRole, setAuthRole] = useState(null);
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -452,140 +500,191 @@ const ProjectCard = ({ project }) => {
     e.preventDefault();
     e.stopPropagation();
 
+    if (!user) {
+      setAuthRole(UserRoles.VOLUNTEER);
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Check if profile is complete
+    if (profileStatus === 'incomplete') {
+      // Navigate to profile completion with project info
+      navigate('/profil/completeaza', {
+        state: {
+          projectId: project.id,
+          returnTo: `/proiecte/${project.id}`
+        }
+      });
+      return;
+    }
+
     try {
-      // For now, we'll use a mock volunteer data since we don't have auth yet
-      const mockVolunteer = {
-        volunteerId: 'mock-volunteer-id',
-        name: 'John Doe',
-        email: 'john@example.com'
+      // Check if user has already applied
+      const existingApplication = project.pendingVolunteers?.find(
+        (v) => v.volunteerId === user.uid
+      );
+
+      if (existingApplication) {
+        // Already applied, just show the success message
+        setShowSuccessMessage(true);
+        setApplicationStatus(existingApplication.status);
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+        }, 3000);
+        return;
+      }
+
+      // Create volunteer application data
+      const volunteerData = {
+        volunteerId: user.uid,
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        status: 'Pending',
+        appliedAt: new Date().toISOString()
       };
 
       // Update project with new application
+      const updatedPendingVolunteers = [
+        ...(project.pendingVolunteers || []),
+        volunteerData
+      ];
+
       await projectsService.updateProject(project.id, {
-        pendingVolunteers: [
-          ...(project.pendingVolunteers || []),
-          {
-            volunteerId: mockVolunteer.volunteerId,
-            status: 'Pending',
-            appliedAt: new Date().toISOString(),
-            name: mockVolunteer.name,
-            email: mockVolunteer.email
-          }
-        ]
+        pendingVolunteers: updatedPendingVolunteers
       });
 
-      // Show success message
+      // Update volunteer's pending projects
+      const volunteerRef = doc(db, 'volunteers', user.uid);
+      const volunteerDoc = await getDoc(volunteerRef);
+      
+      if (volunteerDoc.exists()) {
+        const volunteerData = volunteerDoc.data();
+        await updateDoc(volunteerRef, {
+          pending: [...(volunteerData.pending || []), project.id]
+        });
+      }
+
+      // Show success message and update status
       setShowSuccessMessage(true);
       setApplicationStatus('Pending');
-
+      
       // Hide success message after 3 seconds
       setTimeout(() => {
         setShowSuccessMessage(false);
       }, 3000);
+
     } catch (error) {
       console.error('Error applying to project:', error);
-      // You might want to show an error message here
     }
   };
 
   return (
-    <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
-      <div className={`card ${styles.projectCard}`}>
-        <div className="card-header">
-          <div className={styles.cardHeader}>
-            <div className={`badge ${getStatusBadgeClass(project.status)}`}>
-              {project.status}
-            </div>
-            <div className={`${styles.priority} ${getPriorityColor(project.priority)}`}>
-              {project.priority}
+    <>
+      <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
+        <div className={`card ${styles.projectCard}`}>
+          <div className="card-header">
+            <div className={styles.cardHeader}>
+              <div className={`badge ${getStatusBadgeClass(project.status)}`}>
+                {project.status}
+              </div>
+              <div className={`${styles.priority} ${getPriorityColor(project.priority)}`}>
+                {project.priority}
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="card-body">
-          <h4 className="text-h4">{project.title}</h4>
-          <p className="text-sm text-secondary" style={{ marginBottom: 'var(--spacing-md)' }}>
-            {project.description.length > 120 
-              ? `${project.description.substring(0, 120)}...` 
-              : project.description
-            }
-          </p>
           
-          <div className={styles.projectMeta}>
-            <div className={styles.metaItem}>
-              <MapPin size={16} />
-              <span className="text-sm">{project.location}</span>
+          <div className="card-body">
+            <h4 className="text-h4">{project.title}</h4>
+            <p className="text-sm text-secondary" style={{ marginBottom: 'var(--spacing-md)' }}>
+              {project.description.length > 120 
+                ? `${project.description.substring(0, 120)}...` 
+                : project.description
+              }
+            </p>
+            
+            <div className={styles.projectMeta}>
+              <div className={styles.metaItem}>
+                <MapPin size={16} />
+                <span className="text-sm">{project.location}</span>
+              </div>
+              <div className={styles.metaItem}>
+                <Calendar size={16} />
+                <span className="text-sm">{formatDate(project.startDate)}</span>
+              </div>
+              <div className={styles.metaItem}>
+                <Users size={16} />
+                <span className="text-sm">
+                  {project.currentVolunteers}/{project.maxVolunteers} voluntari
+                </span>
+              </div>
             </div>
-            <div className={styles.metaItem}>
-              <Calendar size={16} />
-              <span className="text-sm">{formatDate(project.startDate)}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <Users size={16} />
-              <span className="text-sm">
-                {project.currentVolunteers}/{project.maxVolunteers} voluntari
-              </span>
+
+            {project.requiredSkills.length > 0 && (
+              <div className={styles.skills}>
+                {project.requiredSkills.slice(0, 3).map((skill, index) => (
+                  <span key={index} className={`badge ${styles.skillBadge}`}>
+                    {skill}
+                  </span>
+                ))}
+                {project.requiredSkills.length > 3 && (
+                  <span className="text-xs text-muted">
+                    +{project.requiredSkills.length - 3} mai multe
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className={styles.progress}>
+              <div className={styles.progressHeader}>
+                <span className="text-sm font-medium">Progres</span>
+                <span className="text-sm text-secondary">{project.progress}%</span>
+              </div>
+              <div className={styles.progressBar}>
+                <div 
+                  className={styles.progressFill}
+                  style={{ width: `${project.progress}%` }}
+                ></div>
+              </div>
             </div>
           </div>
-
-          {project.requiredSkills.length > 0 && (
-            <div className={styles.skills}>
-              {project.requiredSkills.slice(0, 3).map((skill, index) => (
-                <span key={index} className={`badge ${styles.skillBadge}`}>
-                  {skill}
-                </span>
-              ))}
-              {project.requiredSkills.length > 3 && (
-                <span className="text-xs text-muted">
-                  +{project.requiredSkills.length - 3} mai multe
-                </span>
+          
+          <div className="card-footer">
+            <div className={styles.cardActions} onClick={(e) => e.preventDefault()}>
+              <button onClick={handleDonateClick} className="btn btn-error">
+                <Heart size={16} />
+                Donează
+              </button>
+              {project.status !== 'Finalizat' && project.progress < 100 && (
+                <>
+                  {showSuccessMessage ? (
+                    <div className={styles.successMessage}>
+                      <CheckCircle size={16} />
+                      Aplicare trimisă cu succes!
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={handleApplyClick} 
+                      className="btn btn-primary"
+                      disabled={applicationStatus === 'Pending'}
+                    >
+                      {applicationStatus === 'Pending' ? 'Aplicare în așteptare' : 'Susține'}
+                      <Users size={16} />
+                    </button>
+                  )}
+                </>
               )}
             </div>
-          )}
-
-          <div className={styles.progress}>
-            <div className={styles.progressHeader}>
-              <span className="text-sm font-medium">Progres</span>
-              <span className="text-sm text-secondary">{project.progress}%</span>
-            </div>
-            <div className={styles.progressBar}>
-              <div 
-                className={styles.progressFill}
-                style={{ width: `${project.progress}%` }}
-              ></div>
-            </div>
           </div>
         </div>
-        
-        <div className="card-footer">
-          <div className={styles.cardActions} onClick={(e) => e.preventDefault()}>
-            <button onClick={handleDonateClick} className="btn btn-error">
-              <Heart size={16} />
-              Donează
-            </button>
-            {project.status !== 'Finalizat' && project.progress < 100 && (
-              <>
-                {showSuccessMessage ? (
-                  <div className={styles.successMessage}>
-                    <CheckCircle size={16} />
-                    Aplicare trimisă cu succes!
-                  </div>
-                ) : (
-                  <button 
-                    onClick={handleApplyClick} 
-                    className="btn btn-primary"
-                    disabled={applicationStatus === 'Pending'}
-                  >
-                    {applicationStatus === 'Pending' ? 'Aplicare în așteptare' : 'Susține'}
-                    <ArrowRight size={16} />
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
+      </Link>
+      
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        requiredRole={UserRoles.VOLUNTEER}
+        redirectPath={`/proiecte/${project.id}`}
+      />
+    </>
   );
 };
 
