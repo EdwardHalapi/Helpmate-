@@ -217,7 +217,7 @@ const VolunteerDashboard = () => {
         name={user?.firstName + " " + user?.lastName}
         oreTotale={user?.totalHours || 0}
         taskuriFinalizate={1}
-        proiecteActive={user?.projects.length || 0}
+        proiecteActive={user?.accepted?.length || 0}
       />
 
       {/* Tabs */}
@@ -328,12 +328,81 @@ const VolunteerDashboard = () => {
                   </div>
                 ) : (
                   <div className={styles.my_container}>
-                    {user?.pending?.map((project) => (
-                      <>
-                        <h1>{project.title} - pending</h1>
-                        <br />
-                      </>
-                    ))}
+                    <div className={styles.header_aplicatii}>
+                      <div className={styles.header_aplicatii_elemente}>
+                        <h3>Proiecte</h3>
+                      </div>
+                      <div className={styles.header_aplicatii_elemente}>
+                        <h3>Status Proiecte</h3>
+                      </div>
+                      <div className={styles.header_aplicatii_elemente}>
+                        <h3>Status Aplicatii</h3>
+                      </div>
+                    </div>
+                    <br />
+                    <div>
+                      {user?.pending?.map((project) => (
+                        <>
+                          <div className={styles.header_aplicatii}>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <p>{project.title}</p>
+                            </div>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <ProjectAplication
+                                key={project.id}
+                                project={project}
+                              />
+                            </div>
+                            <div className={styles.header_aplicatii_elemente}>
+                              Pending
+                            </div>
+                          </div>
+                          <br />
+                        </>
+                      ))}
+                    </div>
+                    <div>
+                      {user?.refused?.map((project) => (
+                        <>
+                          <div className={styles.header_aplicatii}>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <p>{project.title}</p>
+                            </div>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <ProjectAplication
+                                key={project.id}
+                                project={project}
+                              />
+                            </div>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <p>Refused</p>
+                            </div>
+                          </div>
+                          <br />
+                        </>
+                      ))}
+                    </div>
+                    <div>
+                      {user?.accepted?.map((project) => (
+                        <>
+                          <div className={styles.header_aplicatii}>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <p>{project.title}</p>
+                            </div>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <ProjectAplication
+                                key={project.id}
+                                project={project}
+                              />
+                            </div>
+                            <div className={styles.header_aplicatii_elemente}>
+                              <p>Accepted</p>
+                            </div>
+                          </div>
+                          <br />
+                        </>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -348,10 +417,6 @@ const VolunteerDashboard = () => {
 };
 
 const ProjectAplication = ({ project }) => {
-  const navigate = useNavigate();
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [applicationStatus, setApplicationStatus] = useState(null);
-
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case "Activ":
@@ -364,28 +429,13 @@ const ProjectAplication = ({ project }) => {
         return "badge-warning";
     }
   };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "Ridicată":
-        return styles.priorityHigh;
-      case "Medie":
-        return styles.priorityMedium;
-      case "Scăzută":
-        return styles.priorityLow;
-      default:
-        return styles.priorityMedium;
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "Nu este stabilită";
-    return new Intl.DateTimeFormat("ro-RO", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
+  return (
+    <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
+      <div className={`badge ${getStatusBadgeClass(project.status)}`}>
+        {project.status}
+      </div>
+    </Link>
+  );
 };
 const ProjectCard = ({ project }) => {
   const navigate = useNavigate();

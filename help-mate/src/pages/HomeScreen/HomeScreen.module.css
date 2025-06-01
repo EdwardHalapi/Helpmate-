@@ -1,10 +1,18 @@
-/* HomeScreen.module.css */
+.header_aplicatii {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+.header_aplicatii_elemente {
+  flex: 1;
+  align-items: center;
+  box-sizing: border-box;
+}
 .containerAplication {
   max-width: 2400px;
   padding: 0 var(--spacing-md);
 }
 .my_container {
-  display: flex;
   align-items: center;
   box-sizing: border-box;
 }
