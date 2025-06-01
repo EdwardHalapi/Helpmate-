@@ -82,6 +82,36 @@
   margin-top: var(--spacing-2xl);
 }
 
+.actionCards .card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.actionCards .card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.actionCards .card:focus {
+  outline: 2px solid var(--primary-600);
+  outline-offset: 2px;
+}
+
+.actionCards .card:active {
+  transform: translateY(-2px);
+}
+
+.actionCards .card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-xl);
+}
+
 .actionIcon {
   width: 64px;
   height: 64px;
@@ -96,6 +126,12 @@
 
 .organizerIcon {
   background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+}
+
+.actionCards .btn {
+  margin-top: var(--spacing-md);
+  width: 100%;
+  max-width: 200px;
 }
 
 /* Stats Section */

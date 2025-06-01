@@ -1,0 +1,128 @@
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.cardContent {
+  margin-bottom: 1rem;
+}
+
+.cardContent h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  color: #2d3748;
+}
+
+.cardContent p {
+  margin: 0;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.cardActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+/* Button styles */
+.donateButton,
+.supportButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.donateButton {
+  background-color: #f56565;
+  color: white;
+}
+
+.donateButton:hover {
+  background-color: #e53e3e;
+}
+
+.supportButton {
+  background-color: #4299e1;
+  color: white;
+}
+
+.supportButton:hover {
+  background-color: #3182ce;
+}
+
+/* Status text styles */
+.statusText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: transparent;
+  min-width: 160px;
+  justify-content: center;
+  border: 1px dashed #CBD5E0;
+  color: #718096;
+}
+
+.statusText .statusIcon {
+  flex-shrink: 0;
+}
+
+/* Status variants */
+.statusText.approved {
+  color: #2F855A;
+  border-color: #48BB78;
+  background-color: #F0FFF4;
+}
+
+.statusText.approved .statusIcon {
+  color: #38A169;
+}
+
+.statusText.refused {
+  color: #C53030;
+  border-color: #F56565;
+  background-color: #FFF5F5;
+}
+
+.statusText.refused .statusIcon {
+  color: #E53E3E;
+}
+
+.statusText.processing {
+  color: #2B6CB0;
+  border-color: #4299E1;
+  background-color: #EBF8FF;
+}
+
+.statusText.processing .statusIcon {
+  color: #4299E1;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

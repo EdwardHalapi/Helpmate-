@@ -4,547 +4,464 @@ import "../../styles/globals.css";
 import "../../styles/typography.css";
 import "../../styles/components.css";
 import { volunteerService } from "../../services/api/volunteers.js";
-import { ProjectsService } from "../../services/api/projects.js";
-import Header from "../../components/layout/Header/Header.jsx";
-import React, { useState, useEffect, useLayoutEffect } from "react";
-import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
-import {
-  Search,
-  Calendar,
-  MapPin,
-  Users,
-  Star,
-  Heart,
-  User,
-  Building2,
-  ChevronRight,
-  Filter,
-  ArrowRight,
-  CheckCircle,
-} from "lucide-react";
 import projectsService from "../../services/api/projects.js";
-import { Project } from "../../models/Project.js";
-import styles from "../HomeScreen/HomeScreen.module.css";
+import { tasksService } from "../../services/api/tasks.js";
+import Header from "../../components/layout/Header/Header.jsx";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { ArrowRight, ChevronRight, Calendar, MapPin, Users, Heart, Clock, CheckCircle2, Edit2 } from "lucide-react";
+import { toast } from 'react-hot-toast';
 
-const TaskCard = ({
-  title,
-  status,
-  priority,
-  description,
-  meta,
-  progress,
-  action,
-  projectId,
-}) => {
+const formatDate = (date) => {
+  if (!date) return 'Data nedefinită';
+  try {
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString('ro-RO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    if (date instanceof Date) {
+      return date.toLocaleDateString('ro-RO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    return 'Data nedefinită';
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Data nedefinită';
+  }
+};
+
+const ProjectCard = ({ project }) => {
+  const navigate = useNavigate();
+  
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Activ":
+        return "badge-success";
+      case "Planificat":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-info";
+      default:
+        return "badge-warning";
+    }
+  };
+
+  const getPriorityBadgeClass = (priority) => {
+    switch (priority) {
+      case "Ridicată":
+        return "badge-danger";
+      case "Medie":
+        return "badge-warning";
+      case "Scăzută":
+        return "badge-info";
+      default:
+        return "badge-warning";
+    }
+  };
+
   return (
-    <div className="task-card">
-      <div className="task-header">
-        <span className="task-title">{title}</span>
-        <span
-          className={
-            "badge badge-" +
-            (status == "De făcut"
-              ? "blue"
-              : status == "În progres"
-              ? "yellow"
-              : status == "Finalizat"
-              ? "green"
-              : "blue")
-          }
-        >
-          {status}
+    <div className="project-card" onClick={() => navigate(`/proiecte/${project.id}`)}>
+      <div className="project-header">
+        <div className="project-title-section">
+          <h3>{project.title}</h3>
+          <div className="badge-container">
+            <span className={`badge ${getStatusBadgeClass(project.status)}`}>
+              {project.status}
+            </span>
+            <span className={`badge ${getPriorityBadgeClass(project.priority)}`}>
+              {project.priority}
+            </span>
+          </div>
+        </div>
+        <ChevronRight />
+      </div>
+      <p className="project-desc">{project.description}</p>
+      <div className="project-meta">
+        <span className="meta-item">
+          <MapPin size={16} />
+          {project.location}
         </span>
-        <span
-          className={
-            "badge badge-" +
-            (priority == "Ridicată"
-              ? "red"
-              : priority == "Medie"
-              ? "yellow"
-              : priority == "Scazută"
-              ? "green"
-              : "blue")
-          }
-        >
-          {priority}
+        <span className="meta-item">
+          <Calendar size={16} />
+          {formatDate(project.startDate)}
         </span>
-      </div>
-      <div className="task-desc">{description}</div>
-      <div className="task-meta">
-        <span className="meta-item">{meta[0]}</span>
-        <span className="meta-item">{meta[1]}</span>
-        <span className="meta-item">{meta[2]}</span>
-      </div>
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: progress + "%" }}></div>
-      </div>
-      <div className="task-actions">
-        <button className="log-hours-btn">+ Loghează ore</button>
-        <select
-          className="status-select"
-          onChange={(e) => action(e.target.value, projectId, description)}
-          defaultValue={status}
-        >
-          <option>În progres</option>
-          <option>De făcut</option>
-          <option>Finalizat</option>
-        </select>
+        <span className="meta-item">
+          <Users size={16} />
+          {project.currentVolunteers}/{project.maxVolunteers} voluntari
+        </span>
       </div>
     </div>
   );
 };
 
+const ApplicationItem = ({ project }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <div 
+      className="application-item" 
+      onClick={() => navigate(`/proiecte/${project.id}`)}
+    >
+      <div className="application-info">
+        <span className="application-title">{project.title}</span>
+        <span className="application-meta">
+          <MapPin size={14} /> {project.location} • 
+          <Calendar size={14} /> {formatDate(project.startDate)}
+        </span>
+      </div>
+      <span className="application-status">În așteptare</span>
+    </div>
+  );
+};
+
+const TaskCard = ({ task, onStatusChange, onLogHours }) => {
+  const [isLoggingHours, setIsLoggingHours] = useState(false);
+  const [newHours, setNewHours] = useState('');
+  
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Nou":
+        return "badge-info";
+      case "În Progres":
+        return "badge-warning";
+      case "Finalizat":
+        return "badge-success";
+      case "Blocat":
+        return "badge-danger";
+      default:
+        return "badge-info";
+    }
+  };
+
+  const getPriorityBadgeClass = (priority) => {
+    switch (priority) {
+      case "Ridicată":
+        return "badge-danger";
+      case "Medie":
+        return "badge-warning";
+      case "Scăzută":
+        return "badge-info";
+      default:
+        return "badge-warning";
+    }
+  };
+
+  const handleHoursSubmit = (e) => {
+    e.preventDefault();
+    if (newHours && !isNaN(newHours)) {
+      onLogHours(task.id, Number(newHours));
+      setIsLoggingHours(false);
+      setNewHours('');
+    }
+  };
+
+  return (
+    <div className="task-list-item">
+      <div className="task-main-info">
+        <div className="task-header">
+          <h3>{task.title}</h3>
+          <div className="badge-container">
+            <span className={`badge ${getStatusBadgeClass(task.status)}`}>
+              {task.status}
+            </span>
+            <span className={`badge ${getPriorityBadgeClass(task.priority)}`}>
+              {task.priority}
+            </span>
+          </div>
+        </div>
+        <p className="task-desc">{task.description}</p>
+      </div>
+
+      <div className="task-meta">
+        <div className="task-stats">
+          <span className="meta-item">
+            <Clock size={16} />
+            Estimat: {task.estimatedHours}h
+          </span>
+          <span className="meta-item">
+            <CheckCircle2 size={16} />
+            Lucrat: {task.actualHours}h
+          </span>
+          <span className="meta-item">
+            <Calendar size={16} />
+            {formatDate(task.dueDate)}
+          </span>
+        </div>
+
+        <div className="task-progress">
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ 
+                width: `${Math.min(100, (task.actualHours / task.estimatedHours) * 100)}%` 
+              }}
+            ></div>
+          </div>
+        </div>
+
+        <div className="task-actions">
+          {isLoggingHours ? (
+            <form onSubmit={handleHoursSubmit} className="log-hours-form">
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={newHours}
+                onChange={(e) => setNewHours(e.target.value)}
+                placeholder="Ore lucrate"
+                className="hours-input"
+              />
+              <button type="submit" className="btn btn-primary btn-sm">
+                Salvează
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-secondary btn-sm"
+                onClick={() => setIsLoggingHours(false)}
+              >
+                Anulează
+              </button>
+            </form>
+          ) : (
+            <button 
+              className="btn btn-secondary btn-sm"
+              onClick={() => setIsLoggingHours(true)}
+            >
+              <Edit2 size={14} />
+              Loghează Ore
+            </button>
+          )}
+
+          <select
+            className="status-select"
+            value={task.status}
+            onChange={(e) => onStatusChange(task.id, e.target.value)}
+          >
+            <option value="Nou">De făcut</option>
+            <option value="În Progres">În progres</option>
+            <option value="Finalizat">Finalizat</option>
+            <option value="Blocat">Blocat</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EmptyState = ({ message }) => (
+  <div className="empty-state">
+    <p className="text-lg text-secondary">{message}</p>
+    <Link to="/proiecte" className="btn btn-primary">
+      Explorează Proiecte
+      <ArrowRight size={18} />
+    </Link>
+  </div>
+);
+
 const VolunteerDashboard = () => {
+  const [activeTab, setActiveTab] = useState("tasks");
+  const [userProjects, setUserProjects] = useState([]);
+  const [pendingProjects, setPendingProjects] = useState([]);
+  const [userTasks, setUserTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [pageSelected, setPageSelected] = useState("task-list");
-  const [user, setUser] = useState(null);
-  const [update, setUpdate] = useState(false);
+  const { user: authUser } = useAuth();
+  const navigate = useNavigate();
 
-  const projectsService = new ProjectsService();
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const task = userTasks.find(t => t.id === taskId);
+      if (!task) return;
 
-  const onStatusChange = (newStatus, projectId, taskDescription) => {
-    console.log("Status schimbat:", newStatus);
-    console.log("ID Proiect:", projectId);
-    console.log("Descriere Task:", taskDescription);
+      await tasksService.updateTaskStatus(taskId, newStatus);
+      
+      // Update local state
+      setUserTasks(tasks => 
+        tasks.map(t => 
+          t.id === taskId ? { ...t, status: newStatus } : t
+        )
+      );
 
-    // setUser((prevUser) => ({
-    //   ...prevUser,
-    //   projects: prevUser.projects.map((project) =>
-    //     project.id === projectId
-    //       ? {
-    //           ...project,
-    //           tasks: project.tasks.map((task) =>
-    //             task.descriere === taskDescription
-    //               ? { ...task, status: newStatus }
-    //               : task
-    //           ),
-    //         }
-    //       : project
-    //   ),
-    // }));
+      // Update project progress if task is completed
+      if (task.projectId && (newStatus === 'Finalizat' || task.status === 'Finalizat')) {
+        const projectTasks = userTasks.filter(t => t.projectId === task.projectId);
+        const completedTasks = projectTasks.filter(t => t.status === 'Finalizat').length;
+        await projectsService.updateProjectProgress(task.projectId, completedTasks);
+      }
 
-    setUpdate((prev) => !prev); // Force re-render
+      toast.success("Status actualizat cu succes!");
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      toast.error("Nu s-a putut actualiza statusul");
+    }
+  };
 
-    const project = user.projects.find((p) => p.id === projectId);
+  const handleLogHours = async (taskId, hours) => {
+    try {
+      const task = userTasks.find(t => t.id === taskId);
+      if (!task) return;
 
-    const updatedTasks = project.tasks.map((task) =>
-      task.descriere === taskDescription ? { ...task, status: newStatus } : task
-    );
-    projectsService.updateProject(projectId, {
-      tasks: project.tasks.map((task) =>
-        task.descriere === taskDescription
-          ? { ...task, status: newStatus }
-          : task
-      ),
-    });
+      await tasksService.logHours(taskId, hours);
+      
+      // Update local state
+      setUserTasks(tasks => 
+        tasks.map(t => 
+          t.id === taskId ? { ...t, actualHours: hours } : t
+        )
+      );
+
+      // Update project total hours
+      if (task.projectId) {
+        const hoursDiff = hours - (task.actualHours || 0);
+        await projectsService.addHoursToProject(task.projectId, hoursDiff);
+      }
+
+      toast.success("Ore înregistrate cu succes!");
+    } catch (error) {
+      console.error("Error logging hours:", error);
+      toast.error("Nu s-au putut înregistra orele");
+    }
   };
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadData = async () => {
+      if (!authUser) {
+        navigate('/');
+        return;
+      }
+
       try {
         setLoading(true);
-        const user = await volunteerService.getById("75ytUh3LjYvs5EXF6itS"); // Exemplu de ID
+        const [volunteer, tasks] = await Promise.all([
+          volunteerService.getById(authUser.uid),
+          tasksService.getTasksByVolunteerId(authUser.uid)
+        ]);
+        
+        setUserTasks(tasks);
+        
+        if (volunteer?.projects?.length) {
+          const projectsData = await Promise.all(
+            volunteer.projects.map(projectId => 
+              projectsService.getProjectById(projectId)
+            )
+          );
+          setUserProjects(projectsData.filter(p => p !== null));
+        }
 
-        user.projects = await Promise.all(
-          user.projects.map(async (project) => {
-            const data = await projectsService.getProjectById(project);
-            return { ...data, id: project };
-          })
-        );
-
-        user.pending = await Promise.all(
-          user.pending?.map(async (project) => {
-            const data = await projectsService.getProjectById(project);
-            return { ...data, id: project };
-          })
-        );
-
-        user.refused = await Promise.all(
-          user.refused?.map(async (project) => {
-            const data = await projectsService.getProjectById(project);
-            return { ...data, id: project };
-          })
-        );
-
-        user.accepted = await Promise.all(
-          user.accepted?.map(async (project) => {
-            const data = await projectsService.getProjectById(project);
-            return { ...data, id: project };
-          })
-        );
-
-        console.log("Utilizator încărcat:", user);
-        setUser(user);
+        if (volunteer?.pending?.length) {
+          const pendingData = await Promise.all(
+            volunteer.pending.map(projectId => 
+              projectsService.getProjectById(projectId)
+            )
+          );
+          setPendingProjects(pendingData.filter(p => p !== null));
+        }
       } catch (error) {
-        console.error("Eroare la încărcarea proiectelor:", error);
-        setError("Nu s-a putut încărca utilizatorul");
+        console.error("Error loading data:", error);
+        toast.error("Nu s-au putut încărca datele");
       } finally {
         setLoading(false);
       }
     };
 
-    loadUser();
-  }, [update]);
+    loadData();
+  }, [authUser, navigate]);
 
   if (loading) {
     return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <p className="text-lg text-secondary">Încărcăm utilizatorul...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="error">
-        <p className="text-lg text-error">{error}</p>
-        <button
-          className="btn btn-primary"
-          onClick={() => window.location.reload()}
-        >
-          Încearcă din nou
-        </button>
+      <div className="dashboard-container">
+        <Header />
+        <div className="dashboard-content">
+          <div className="loading">
+            <div className="spinner"></div>
+            <p>Se încarcă datele...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="dashboard-container">
-      {/* Header */}
-      <Header
-        name={user?.firstName + " " + user?.lastName}
-        oreTotale={user?.totalHours || 0}
-        taskuriFinalizate={1}
-        proiecteActive={user?.projects.length || 0}
-      />
-
-      {/* Tabs */}
-      <nav className="dashboard-tabs">
-        <button
-          className={"tab " + (pageSelected === "task-list" ? "active" : "")}
-          onClick={() => setPageSelected("task-list")}
-        >
-          Task-urile Mele
-        </button>
-        <button
-          className={"tab " + (pageSelected === "proiecte" ? "active" : "")}
-          onClick={() => setPageSelected("proiecte")}
-        >
-          Proiectele Mele
-        </button>
-        <button
-          className={
-            "tab " + (pageSelected === "status-aplicatii" ? "active" : "")
-          }
-          onClick={() => setPageSelected("status-aplicatii")}
-        >
-          Status Aplicatii
-        </button>
-      </nav>
-
-      {/* Task List */}
-      {pageSelected === "task-list" && (
-        <main className="dashboard-main">
-          <h2 className="section-title">Task-urile Mele</h2>
-          <div className="task-list">
-            {user?.projects.length === 0 && <p>Nu exista taskuri</p>}
-            {user?.projects.map((project) => (
-              <div key={project.id} className="project-tasks">
-                <h3 className="project-title">{project.title}</h3>
-                {project.tasks?.length === 0 && (
-                  <p className="text-secondary">
-                    Nu există task-uri pentru acest proiect.
-                  </p>
-                )}{" "}
-                {project?.tasks?.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    projectId={project.id}
-                    title={task.titlu}
-                    status={task.status}
-                    priority={task.prioritate}
-                    description={task.descriere}
-                    meta={[
-                      `Data limită: ${new Date(
-                        task.termen.seconds
-                      ).toLocaleDateString()}`,
-                      `Ore logate: ${task.ore}h/${task.oreTarget}h`,
-                      `Locatie: ${task.locatie}`,
-                    ]}
-                    progress={(task.ore / task.oreTarget) * 100}
-                    action={onStatusChange}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        </main>
-      )}
-
-      {pageSelected === "proiecte" && (
-        <main className="dashboard-main">
-          <h2 className="section-title">Proiectele Mele</h2>
-          <div className="proiecte">
-            {/* Projects Section */}
-            <section className={styles.projects}>
-              <div className={styles.container}>
-                {user?.projects.length === 0 ? (
-                  <div className={styles.noProjects}>
-                    <p className="text-lg text-secondary">
-                      Nu s-au găsit proiecte care să corespundă criteriilor
-                      tale.
-                    </p>
-                  </div>
-                ) : (
-                  <div className={styles.projectsGrid}>
-                    {user?.projects.map((project) => (
-                      <ProjectCard key={project.id} project={project} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
-        </main>
-      )}
-
-      {pageSelected === "status-aplicatii" && (
-        <main className="dashboard-main">
-          <h2 className="section-title">Status Aplicatii</h2>
-          <div className="status-aplicatii">
-            {/* Projects Section */}
-            <section className={styles.projects}>
-              <div className={styles.containerAplication}>
-                {user?.pending?.length === 0 &&
-                user?.refused?.length === 0 &&
-                user?.accepted?.lenght === 0 ? (
-                  <div className={styles.noProjects}>
-                    <p className="text-lg text-secondary">
-                      Nu s-au gasit aplicații. Începe prin a te inscrie la unul
-                      dintre proiecte.
-                    </p>
-                  </div>
-                ) : (
-                  <div className={styles.my_container}>
-                    {user?.pending?.map((project) => (
-                      <>
-                        <h1>{project.title} - pending</h1>
-                        <br />
-                      </>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
-        </main>
-      )}
-
-      {/* Footer */}
-    </div>
-  );
-};
-
-const ProjectAplication = ({ project }) => {
-  const navigate = useNavigate();
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [applicationStatus, setApplicationStatus] = useState(null);
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case "Activ":
-        return "badge-success";
-      case "Planificat":
-        return "badge-warning";
-      case "Finalizat":
-        return "badge-info";
-      default:
-        return "badge-warning";
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "Ridicată":
-        return styles.priorityHigh;
-      case "Medie":
-        return styles.priorityMedium;
-      case "Scăzută":
-        return styles.priorityLow;
-      default:
-        return styles.priorityMedium;
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "Nu este stabilită";
-    return new Intl.DateTimeFormat("ro-RO", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-};
-const ProjectCard = ({ project }) => {
-  const navigate = useNavigate();
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [applicationStatus, setApplicationStatus] = useState(null);
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case "Activ":
-        return "badge-success";
-      case "Planificat":
-        return "badge-warning";
-      case "Finalizat":
-        return "badge-info";
-      default:
-        return "badge-warning";
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "Ridicată":
-        return styles.priorityHigh;
-      case "Medie":
-        return styles.priorityMedium;
-      case "Scăzută":
-        return styles.priorityLow;
-      default:
-        return styles.priorityMedium;
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "Nu este stabilită";
-    return new Intl.DateTimeFormat("ro-RO", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
-  const handleApplyClick = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    try {
-      // For now, we'll use a mock volunteer data since we don't have auth yet
-      const mockVolunteer = {
-        volunteerId: "mock-volunteer-id",
-        name: "John Doe",
-        email: "john@example.com",
-      };
-
-      // Update project with new application
-      await projectsService.updateProject(project.id, {
-        pendingVolunteers: [
-          ...(project.pendingVolunteers || []),
-          {
-            volunteerId: mockVolunteer.volunteerId,
-            status: "Pending",
-            appliedAt: new Date().toISOString(),
-            name: mockVolunteer.name,
-            email: mockVolunteer.email,
-          },
-        ],
-      });
-
-      // Show success message
-      setShowSuccessMessage(true);
-      setApplicationStatus("Pending");
-
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowSuccessMessage(false);
-      }, 3000);
-    } catch (error) {
-      console.error("Error applying to project:", error);
-      // You might want to show an error message here
-    }
-  };
-
-  return (
-    <Link to={`/proiecte/${project.id}`} className={styles.projectCardLink}>
-      <div className={`card ${styles.projectCard}`}>
-        <div className="card-header">
-          <div className={styles.cardHeader}>
-            <div className={`badge ${getStatusBadgeClass(project.status)}`}>
-              {project.status}
-            </div>
-            <div
-              className={`${styles.priority} ${getPriorityColor(
-                project.priority
-              )}`}
-            >
-              {project.priority}
-            </div>
-          </div>
+      <Header />
+      <div className="dashboard-content">
+        <div className="tabs">
+          <button 
+            className={`tab ${activeTab === "tasks" ? "active" : ""}`}
+            onClick={() => setActiveTab("tasks")}
+          >
+            Task-urile Mele
+          </button>
+          <button 
+            className={`tab ${activeTab === "projects" ? "active" : ""}`}
+            onClick={() => setActiveTab("projects")}
+          >
+            Proiectele Mele
+          </button>
+          <button 
+            className={`tab ${activeTab === "applications" ? "active" : ""}`}
+            onClick={() => setActiveTab("applications")}
+          >
+            Aplicații în Așteptare
+          </button>
         </div>
 
-        <div className="card-body">
-          <h4 className="text-h4">{project.title}</h4>
-          <p
-            className="text-sm text-secondary"
-            style={{ marginBottom: "var(--spacing-md)" }}
-          >
-            {project.description.length > 120
-              ? `${project.description.substring(0, 120)}...`
-              : project.description}
-          </p>
-
-          <div className={styles.projectMeta}>
-            <div className={styles.metaItem}>
-              <MapPin size={16} />
-              <span className="text-sm">{project.location}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <Calendar size={16} />
-              <span className="text-sm">{formatDate(project.startDate)}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <Users size={16} />
-              <span className="text-sm">
-                {project.currentVolunteers}/{project.maxVolunteers} voluntari
-              </span>
-            </div>
-          </div>
-
-          {project.requiredSkills.length > 0 && (
-            <div className={styles.skills}>
-              {project.requiredSkills.slice(0, 3).map((skill, index) => (
-                <span key={index} className={`badge ${styles.skillBadge}`}>
-                  {skill}
-                </span>
-              ))}
-              {project.requiredSkills.length > 3 && (
-                <span className="text-xs text-muted">
-                  +{project.requiredSkills.length - 3} mai multe
-                </span>
+        <div className="tab-content">
+          {activeTab === "tasks" && (
+            <section className="section">
+              {userTasks.length > 0 ? (
+                <div className="tasks-list">
+                  {userTasks.map(task => (
+                    <TaskCard 
+                      key={task.id} 
+                      task={task}
+                      onStatusChange={handleStatusChange}
+                      onLogHours={handleLogHours}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState message="Nu ai niciun task momentan" />
               )}
-            </div>
+            </section>
           )}
 
-          <div className={styles.progress}>
-            <div className={styles.progressHeader}>
-              <span className="text-sm font-medium">Progres</span>
-              <span className="text-sm text-secondary">
-                {project.progress}%
-              </span>
-            </div>
-            <div className={styles.progressBar}>
-              <div
-                className={styles.progressFill}
-                style={{ width: `${project.progress}%` }}
-              ></div>
-            </div>
-          </div>
+          {activeTab === "projects" && (
+            <section className="section">
+              {userProjects.length > 0 ? (
+                <div className="projects-grid">
+                  {userProjects.map(project => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState message="Nu ai niciun proiect activ momentan" />
+              )}
+            </section>
+          )}
+
+          {activeTab === "applications" && (
+            <section className="section">
+              {pendingProjects.length > 0 ? (
+                <div className="applications-list">
+                  {pendingProjects.map(project => (
+                    <ApplicationItem key={project.id} project={project} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState message="Nu ai nicio aplicație în așteptare" />
+              )}
+            </section>
+          )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

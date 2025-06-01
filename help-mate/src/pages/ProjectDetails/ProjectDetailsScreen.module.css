@@ -782,23 +782,123 @@
 .successMessage {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  color: var(--success-600);
-  font-weight: 500;
-  font-size: 0.875rem;
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   background-color: var(--success-50);
-  border-radius: var(--radius-md);
+  color: var(--success-700);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-medium);
   animation: fadeIn 0.3s ease;
+}
+
+.successMessage svg {
+  color: var(--success-600);
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Location Section */
+.locationSection {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.sectionHeader h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.sectionIcon {
+  color: var(--primary-600);
+}
+
+.locationContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.locationText {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.mapContainer {
+  position: relative;
+  height: 200px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.mapContainer:hover {
+  transform: translateY(-2px);
+}
+
+.mapContainer:hover .mapOverlay {
+  opacity: 1;
+}
+
+.mapOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.viewMapButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: white;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.viewMapButton:hover {
+  background: var(--primary-50);
+  color: var(--primary-600);
+}
+
+.fullMapContainer {
+  height: 60vh;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
