@@ -186,7 +186,7 @@ const HomeScreen = () => {
                   <p className="text-base text-secondary">
                     Creează și gestionează proiecte de voluntariat
                   </p>
-                  <Link to="/dashboard/organizator/creeaza-proiect" className="btn btn-secondary">
+                  <Link to="/organization/profile" className="btn btn-secondary">
                     Creează Proiect
                     <ChevronRight size={18} />
                   </Link>

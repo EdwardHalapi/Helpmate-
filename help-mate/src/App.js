@@ -4,6 +4,7 @@ import './App.css';
 
 // Import pages - doar HomeScreen este implementat momentan
 import HomeScreen from './pages/HomeScreen/HomeScreen';
+import OrganizationProfile from './components/organization/OrganizationProfile';
 
 // Placeholder components pentru paginile care vor fi implementate
 const PlaceholderPage = ({ pageName }) => (
@@ -74,7 +75,9 @@ function App() {
           {/* Pagina principală - HomeScreen implementat */}
           <Route path="/" element={<HomeScreen />} />
           
-         
+          {/* Ruta pentru profilul organizatorului */}
+          <Route path="/organization/profile" element={<OrganizationProfile />} />
+          
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
           <Route path="/forgot-password" element={<PlaceholderPage pageName="Resetare Parolă" />} />
